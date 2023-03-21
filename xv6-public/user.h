@@ -23,6 +23,7 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int myfunction(char*); //Mar 21st 2023
 
 // ulib.c
 int stat(const char*, struct stat*);
