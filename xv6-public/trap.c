@@ -52,7 +52,8 @@ trap(struct trapframe *tf)
       acquire(&tickslock);
       ticks++;
       if(ticks % 100 == 0) {
-        MLFQreset();
+        //MLFQreset();
+        //cprintf("100tick!\n");
       }
       wakeup(&ticks);
       release(&tickslock);
