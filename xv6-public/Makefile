@@ -1,3 +1,4 @@
+#proc.o -> proc_new.o
 OBJS = \
 	bio.o\
 	console.o\
@@ -14,7 +15,7 @@ OBJS = \
 	mp.o\
 	picirq.o\
 	pipe.o\
-	proc.o\
+	proc_new.o\
 	sleeplock.o\
 	spinlock.o\
 	string.o\

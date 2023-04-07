@@ -15,11 +15,11 @@ struct {
 static struct proc *initproc;
 
 int nextpid = 1;
-
-struct {
+struct MLFQ{
   struct spinlock lock;
   struct queue L[NUM_QUEUES];
-} mlfq;
+};
+struct MLFQ mlfq;
 
 extern void forkret(void);
 extern void trapret(void);

@@ -1,5 +1,5 @@
 #define NUM_QUEUES 3
-
+//#include "spinlock.h"
 // Per-CPU state
 struct cpu {
   uchar apicid;                // Local APIC ID
@@ -76,6 +76,7 @@ struct queue {
   struct proc *head;
   struct proc *tail;
 };
+
 
 
 
