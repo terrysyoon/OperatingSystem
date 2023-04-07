@@ -1,3 +1,5 @@
+#define NUM_QUEUES 3
+
 // Per-CPU state
 struct cpu {
   uchar apicid;                // Local APIC ID
@@ -49,7 +51,33 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+
+  // MLFQ fields
+  int priority;                // Process priority
+  int q_ticks;                 // Ticks in current queue
+  int n_run;                   // Number of times process has run
+  int ctime;                   // Creation time
+  int etime;                   // End time
+  int rtime;                   // Running time
+  int iotime;                  // I/O time
+  int q[NUM_QUEUES];           // Ticks in each queue
+  int q_ticks_total;           // Total ticks in all queues
+
+  // Queue fields
+  struct proc *next;           // Next process in queue
 };
+
+struct queue {
+  int level; // 0~2, L0~L2, Meaning 0 is the highest priority queue, 2 is the lowest priority queue.
+  int size; // The number of processes in this queue
+  int max_size; // The maximum number of processes allowed in this queue. Since the queue is implemented in a linked list, this should be meaningless but jic.
+  int quantom; // Maximum number of ticks allowed in this queue
+
+  struct proc *head;
+  struct proc *tail;
+};
+
+
 
 // Process memory is laid out contiguously, low addresses first:
 //   text
