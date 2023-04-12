@@ -21,3 +21,10 @@
 #define SYS_mkdir  20
 #define SYS_close  21
 #define SYS_myfunction 22 //Mar 21st 2023
+
+/*Syscalls for MLFQ*/
+#define SYS_yield 23
+#define SYS_getlevel 24
+#define SYS_setpriority 25
+#define SYS_lock 26
+#define SYS_unlock 27
