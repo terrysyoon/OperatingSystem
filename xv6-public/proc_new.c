@@ -147,6 +147,22 @@ found:
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
 
+  acquire(&ptable.lock);
+  acquire(&mlfq.lock);
+  cprintf("allocproc\n");
+  if(mlfq.L[0].head == 0) { //if L0 is empty
+    cprintf("L0 empty\n");
+    mlfq.L[0].head = p;
+  }
+  else{
+    cprintf("L0 not empty\n");
+    mlfq.L[0].tail -> next = p;
+    mlfq.L[0].tail = p;
+  }
+  cprintf("end\n");
+  release(&mlfq.lock);
+  release(&ptable.lock);
+
   return p;
 }
 
@@ -157,7 +173,7 @@ userinit(void)
 {
   struct proc *p;
   extern char _binary_initcode_start[], _binary_initcode_size[];
-
+  cprintf("user init begin\n");//debug
   p = allocproc();
   
   initproc = p;
@@ -186,6 +202,8 @@ userinit(void)
   p->state = RUNNABLE;
 
   release(&ptable.lock);
+  cprintf("user init end\n");
+  //sleep(5);
 }
 
 // Grow current process's memory by n bytes.
@@ -364,7 +382,8 @@ scheduler(void)
   for(;;){
     // Enable interrupts on this processor.
     sti();
-
+    cprintf("scheduler\n"); //debug
+    //exit(); //debug
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     /*
