@@ -382,7 +382,7 @@ scheduler(void)
   for(;;){
     // Enable interrupts on this processor.
     sti();
-    cprintf("scheduler\n"); //debug
+    //cprintf("scheduler\n"); //debug
     //exit(); //debug
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
