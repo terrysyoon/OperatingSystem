@@ -53,6 +53,7 @@ struct proc {
   char name[16];               // Process name (debugging)
 
   // MLFQ fields
+  int q_number; //0~2, Indicates its queue group. L0~L2
   int priority;                // Process priority
   int q_ticks;                 // Ticks in current queue
   int n_run;                   // Number of times process has run
@@ -65,6 +66,7 @@ struct proc {
 
   // Queue fields
   struct proc *next;           // Next process in queue
+  struct proc *prev;
 };
 
 struct queue {

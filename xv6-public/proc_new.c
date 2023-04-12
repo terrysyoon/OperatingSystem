@@ -111,6 +111,7 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
 
+  p->q_number = 0;
   p->priority = 3;
   p->q_ticks = 0;
   p->n_run = 0;
@@ -120,6 +121,7 @@ found:
   //p->iotime = 0;
   p->q_ticks_total = 0;
   p->next = 0; //nullptr
+  p->prev = 0; //nullptr
   for(int i = 0; i < NUM_QUEUES; i++){
     p->q[i] = 0;
   }
@@ -151,12 +153,18 @@ found:
   acquire(&mlfq.lock);
   cprintf("allocproc\n");
   if(mlfq.L[0].head == 0) { //if L0 is empty
-    cprintf("L0 empty\n");
+    cprintf("L0 empty\n"); //debug
     mlfq.L[0].head = p;
+    p->prev = 0; //p is the first element of the doubly ll. Seems unneccesary but to be sure.
   }
   else{
-    cprintf("L0 not empty\n");
+    cprintf("L0 not empty\n"); //debug
+
+    //Create double link
+    p->prev = mlfq.L[0].tail;
     mlfq.L[0].tail -> next = p;
+
+    //Update tail
     mlfq.L[0].tail = p;
   }
   cprintf("end\n");
@@ -409,8 +417,52 @@ scheduler(void)
     int level;
     for(level = 0; level < NUM_QUEUES; level++) { //Start from L0 to L2
       for(p = mlfq.L[level].head; p != 0; p = p->next) { // Search till the end of the linked list queue.
+        
         if(p->state != RUNNABLE)
           continue;
+
+        if(p->q_number != level) {
+            panic("Contaminated MLFQ queue.");
+        }
+
+        if(p->q[level] >= mlfq.L[level].quantom) { //If this process spent all quantoms available from the queue it belongs.
+          
+          //L2: This process must be promoted
+          if(level == 2) {
+            if(p->priority > 0) {
+              p->priority--;
+            }
+          }
+          //L0~L1: This process must be sent to the lower level queue.
+          //FIXME: The original queue must be concatenated. (if L0-> L1, concat L0) -> Implement doubly linked list.
+          else {
+            if(p == mlfq.L[level].tail) { //if p is the tail of the queue, update tail
+              mlfq.L[level].tail = p->prev;
+            }
+            if(p->prev) { //if p is not the head, concat
+              p->prev->next = p->next;
+            } else{ //if p is the head, update head
+              mlfq.L[level].head = p->next;
+            }
+            p->next = 0; //When demoted, the process must attach to the tail.
+            if(mlfq.L[level+1].head) { //if the lower level queue is not empty
+              mlfq.L[level+1].tail->next = p;
+              mlfq.L[level+1].tail = p;
+            } else{
+              mlfq.L[level+1].head = p;
+              mlfq.L[level+1].tail = p;
+            }
+            p->q_number++;
+          }
+
+          p->q[level] = 0; //Once the priority/queue modification occured, reset the quantom count of this process for L[level]
+          continue;
+        }
+
+        //Process to be serviced chosen.
+        p->q_ticks[level]++;
+        p->q_ticks_total++;
+
 
         // Switch to chosen process.  It is the process's job
         // to release ptable.lock and then reacquire it
@@ -462,9 +514,15 @@ sched(void)
 void
 yield(void) //must be altered for this project. no signature change required.
 {
+  //FIXME: nonpreemptive yield가 아니면 여기서 초기화 하면 안되는데
+  struct proc *p;
   acquire(&ptable.lock);  //DOC: yieldlock
-  myproc()->state = RUNNABLE;
+  //acquire(&mlfq.lock);
+  p = myproc();
+  p->state = RUNNABLE;
+  //p->q[q_number] = 0;
   sched();
+  //release(&mlfq.lock);
   release(&ptable.lock);
 }
 
@@ -620,10 +678,15 @@ MLFQreset(void) {
   for(level = 0; level < NUM_QUEUES; level++) {
     for(p = mlfq.L[level].head; p != 0; p = p->next) {
 
-      if(p->state == RUNNABLE) {
+      if(p->state == RUNNABLE) { //is this condition necessary?
         
+        p->q_number = 0;
         p->priority = 3;
         p->q_ticks = 0;
+        int i;
+        for(i = 0; i < NUM_QUEUES; i++) {
+          p->q[q_ticks_total] = 0;
+        }
         // FIXME: More fields to come? idk
 
 
