@@ -14,6 +14,8 @@ extern uint vectors[];  // in vectors.S: array of 256 entry pointers
 struct spinlock tickslock;
 uint ticks;
 
+extern struct MLFQ_TICK mlfq_tick;
+
 void
 tvinit(void)
 {
@@ -51,12 +53,14 @@ trap(struct trapframe *tf)
     if(cpuid() == 0){
       acquire(&tickslock);
       ticks++;
-      if(ticks % 100 == 0) {
-        //MLFQreset();
-        //cprintf("100tick!\n");
-      }
       wakeup(&ticks);
       release(&tickslock);
+
+      // MLFQ
+      acquire(&mlfq_tick.lock);
+      mlfq_tick.global_tick++;
+      wakeup(&mlfq_tick.global_tick);
+      release(&mlfq_tick.lock);
     }
     lapiceoi();
     break;

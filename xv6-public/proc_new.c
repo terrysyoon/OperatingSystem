@@ -15,10 +15,14 @@ struct {
 static struct proc *initproc;
 
 int nextpid = 1;
+
 struct MLFQ{
   struct spinlock lock;
   struct queue L[NUM_QUEUES];
+  int isLocked;
+  struct proc* urgent_process;
 };
+struct MLFQ_TICK mlfq_tick;
 struct MLFQ mlfq;
 
 extern void forkret(void);
@@ -36,7 +40,7 @@ void
 MLFQinit(void) {
   int i;
   initlock(&mlfq.lock, "mlfq");
-
+  initlock(&mlfq_tick.lock, "mlfq_tick");
   for(i = 0; i < NUM_QUEUES; i++) {
     mlfq.L[i].level = i;
     mlfq.L[i].size = 0;
@@ -46,6 +50,10 @@ MLFQinit(void) {
     mlfq.L[i].head = 0; //nullptr
     mlfq.L[i].tail = 0;
   }
+  mlfq.isLocked = 0;
+  mlfq.urgent_process = 0; //nullptr
+
+  mlfq_tick.global_tick = 0;
 }
 
 // Must be called with interrupts disabled
@@ -460,7 +468,7 @@ scheduler(void)
         }
 
         //Process to be serviced chosen.
-        p->q_ticks[level]++;
+        p->q[level]++;
         p->q_ticks_total++;
 
 
@@ -668,24 +676,29 @@ procdump(void)
   }
 }
 
+// Includes scheduler unlock
 void 
 MLFQreset(void) {
   struct proc *p;
   acquire(&ptable.lock);
   acquire(&mlfq.lock);
 
+  schedulerUnlockChecked();
+
   int level;
   for(level = 0; level < NUM_QUEUES; level++) {
     for(p = mlfq.L[level].head; p != 0; p = p->next) {
 
-      if(p->state == RUNNABLE) { //is this condition necessary?
-        
+      //FIXME: is this condition necessary? Or should I make this condition more inclusive?
+      //if(p->state == RUNNABLE) { //is this condition necessary?
+      //if(p->state != ZOMBIE) {
+      if(1) {
         p->q_number = 0;
         p->priority = 3;
         p->q_ticks = 0;
         int i;
         for(i = 0; i < NUM_QUEUES; i++) {
-          p->q[q_ticks_total] = 0;
+          p->q[i] = 0;
         }
         // FIXME: More fields to come? idk
 
@@ -705,6 +718,128 @@ MLFQreset(void) {
     mlfq.L[level].head = 0;
     mlfq.L[level].tail = 0;
   }
+
   release(&mlfq.lock);
   release(&ptable.lock);
+}
+
+int getLevel() {
+  struct proc *p = myproc();
+  return p->q_number;
+}
+
+void setPriority(int pid, int priority) {
+  struct proc *p;
+
+  if(priority < 0 || priority > 3) {
+    cprintf("Priority must be between 0 and 3.\n");
+    return;
+  }
+
+  acquire(&ptable.lock);
+  acquire(&mlfq.lock);
+
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if(p->pid == pid) {
+      p->priority = priority;
+      release(&mlfq.lock);
+      release(&ptable.lock);
+      return;
+    }
+  }
+  release(&mlfq.lock);
+  release(&ptable.lock); 
+  cprintf("No process with pid %d found.\n", pid);
+}
+
+void schedulerLock(int password) {
+  struct proc* p = myproc();
+
+  //if password is correct, lock the scheduler.
+  //Also check if the scheduler is already locked.
+
+  if(password == SCHEDULER_LOCK_PASSWORD && !mlfq.isLocked) {
+    //To-Dos:
+    //reset global tick counter -> done, April 12nd 2023
+    acquire(&mlfq.lock);
+    mlfq.isLocked = 1;
+    mlfq.urgent_process = p;
+    release(&mlfq.lock);
+    acquire(&mlfq_tick.lock);
+    mlfq_tick.global_tick = 0;
+    release(&mlfq_tick.lock);
+  }
+  else{ //error message
+    cprintf("Password is incorrect or scheduler is already locked.\n");
+        cprintf("pid = %d, time quantum = %u, current queue level = %d\n",
+      p->pid, p->q[p->q_number], p->q_number);
+    exit();
+  }
+}
+
+// Must be called only by schedulerUnlock() or MLFQreset()
+// ptable.lock and mlfq.lock must be held
+void schedulerUnlockChecked() {
+    mlfq.isLocked = 0;
+
+    //reset priority and queue number, as DOS does.
+    mlfq.urgent_process->priority = 3;
+    int i = 0;
+    for(i = 0; i < NUM_QUEUES; i++) {
+      mlfq.urgent_process->q[i] = 0;
+    }
+    mlfq.urgent_process->q_ticks = 0;
+    //urgent process to the head of L0
+    mlfq.urgent_process->q_number = 0;
+    //if L0 is not empty, then urgent process is the head of L0.
+    if(mlfq.L[0].head) {
+      mlfq.urgent_process->prev = 0;
+      mlfq.urgent_process->next = mlfq.L[0].head;
+      mlfq.L[0].head->prev = mlfq.urgent_process;
+      mlfq.L[0].head = mlfq.urgent_process;
+    }
+    else { //Create an empty queue. I highly doubt this will ever happen.
+      mlfq.L[0].head = mlfq.urgent_process;
+      mlfq.L[0].tail = mlfq.urgent_process;
+      mlfq.urgent_process->prev = 0;
+      mlfq.urgent_process->next = 0;
+    }
+    mlfq.urgent_process = 0; //nullptr
+}
+
+void schedulerUnlock(int password) {
+  struct proc* p = myproc();
+
+  //if password is correct, unlock the scheduler.
+  //Also check if the scheduler is already unlocked.
+
+  if(password == SCHEDULER_LOCK_PASSWORD && mlfq.isLocked && mlfq.urgent_process == p) {
+    //To-Dos:
+    //reset global tick counter -> done, April 12nd 2023
+    acquire(&ptable.lock);
+    acquire(&mlfq.lock);
+    schedulerUnlockChecked();
+    release(&mlfq.lock);
+    release(&ptable.lock);
+
+    //Uncomment this when you want to reset the global tick counter.
+/*     acquire(&mlfq_tick.lock);
+    mlfq_tick.global_tick = 0;
+    release(&mlfq_tick.lock); */
+  }
+  else{ //error message
+    if(password != SCHEDULER_LOCK_PASSWORD) {
+      cprintf("Password is incorrect.\n");
+    }
+    if(!mlfq.isLocked) {
+      cprintf("Scheduler is already unlocked.\n");
+    }
+    else if(p != mlfq.urgent_process) {
+      cprintf("Only the urgent process can unlock the scheduler. (%d trying to unlock scheduler for %d) \n", p->pid, mlfq.urgent_process->pid);
+
+    }
+    cprintf("pid = %d, time quantum = %u, current queue level = %d\n",
+      p->pid, p->q[p->q_number], p->q_number);
+    exit();
+  }
 }

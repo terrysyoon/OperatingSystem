@@ -1,4 +1,5 @@
-#define NUM_QUEUES 3
+#define NUM_QUEUES (3)
+#define SCHEDULER_LOCK_PASSWORD (2021078059)
 //#include "spinlock.h"
 // Per-CPU state
 struct cpu {
@@ -79,7 +80,10 @@ struct queue {
   struct proc *tail;
 };
 
-
+struct MLFQ_TICK{
+  struct spinlock lock;
+  uint global_tick;
+};
 
 
 // Process memory is laid out contiguously, low addresses first:
