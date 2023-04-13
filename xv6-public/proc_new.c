@@ -410,6 +410,7 @@ scheduler(void)
   for(;;){
     // Enable interrupts on this processor.
     sti();
+    struct proc* L2_cand = 0;
     //cprintf("scheduler\n"); //debug
     //exit(); //debug
     // Loop over process table looking for process to run.
@@ -440,7 +441,6 @@ scheduler(void)
     }
     else{
       cprintf("Scheduler not locked\n");
-      struct proc* L2_cand = 0;
       for(level = 0; level < NUM_QUEUES; level++) { //Start from L0 to L2
         for(p = mlfq.L[level].head; p != 0; p = p->next) { // Search till the end of the linked list queue.
           
@@ -503,7 +503,7 @@ scheduler(void)
       }  
     }
 
-
+    if(L2_cand) p = L2_cand;
     //Process to be serviced chosen.
     //p->q[p->q_number]++;
     p->q_ticks_total++;
@@ -545,8 +545,10 @@ sched(void)
 
   if(!holding(&ptable.lock))
     panic("sched ptable.lock");
-  if(mycpu()->ncli != 1)
+  if(mycpu()->ncli != 1){
+    cprintf("ncli: %d\n", mycpu()->ncli);
     panic("sched locks");
+  }
   if(p->state == RUNNING)
     panic("sched running");
   if(readeflags()&FL_IF)
@@ -559,7 +561,7 @@ sched(void)
 // Give up the CPU for one scheduling round.
 void
 yield(void) //must be altered for this project. no signature change required.
-{
+{  cprintf("yield called\n");
   //FIXME: nonpreemptive yield가 아니면 여기서 초기화 하면 안되는데
   struct proc *p;
   acquire(&ptable.lock);  //DOC: yieldlock
