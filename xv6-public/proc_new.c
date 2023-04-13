@@ -330,6 +330,15 @@ exit(void)
     }
   }
 
+
+  //Remove from MLFQ queue
+  if(curproc->prev) { //if this process is not head
+    curproc->prev->next = curproc->next;
+  }
+  else { //if this process is head
+    mlfq.L[curproc->q_number].head = curproc->next;
+  }
+
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
   sched();
