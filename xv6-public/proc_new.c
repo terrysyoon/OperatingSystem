@@ -421,72 +421,92 @@ scheduler(void)
       // It should have changed its p->state before coming back.
       c->proc = 0;
     }*/
-
     int level;
-    for(level = 0; level < NUM_QUEUES; level++) { //Start from L0 to L2
-      for(p = mlfq.L[level].head; p != 0; p = p->next) { // Search till the end of the linked list queue.
-        
-        if(p->state != RUNNABLE)
-          continue;
-
-        if(p->q_number != level) {
-            panic("Contaminated MLFQ queue.");
-        }
-
-        if(p->q[level] >= mlfq.L[level].quantom) { //If this process spent all quantoms available from the queue it belongs.
-          
-          //L2: This process must be promoted
-          if(level == 2) {
-            if(p->priority > 0) {
-              p->priority--;
-            }
-          }
-          //L0~L1: This process must be sent to the lower level queue.
-          //FIXME: The original queue must be concatenated. (if L0-> L1, concat L0) -> Implement doubly linked list.
-          else {
-            if(p == mlfq.L[level].tail) { //if p is the tail of the queue, update tail
-              mlfq.L[level].tail = p->prev;
-            }
-            if(p->prev) { //if p is not the head, concat
-              p->prev->next = p->next;
-            } else{ //if p is the head, update head
-              mlfq.L[level].head = p->next;
-            }
-            p->next = 0; //When demoted, the process must attach to the tail.
-            if(mlfq.L[level+1].head) { //if the lower level queue is not empty
-              mlfq.L[level+1].tail->next = p;
-              mlfq.L[level+1].tail = p;
-            } else{
-              mlfq.L[level+1].head = p;
-              mlfq.L[level+1].tail = p;
-            }
-            p->q_number++;
-          }
-
-          p->q[level] = 0; //Once the priority/queue modification occured, reset the quantom count of this process for L[level]
-          continue;
-        }
-
-        //Process to be serviced chosen.
-        p->q[level]++;
-        p->q_ticks_total++;
-
-
-        // Switch to chosen process.  It is the process's job
-        // to release ptable.lock and then reacquire it
-        // before jumping back to us.
-        c->proc = p;
-        switchuvm(p);
-        p->state = RUNNING;
-
-        swtch(&(c->scheduler), p->context);
-        switchkvm();
-
-        // Process is done running for now.
-        // It should have changed its p->state before coming back.
-        c->proc = 0;
-      }
+    acquire(&mlfq.lock);
+    if(mlfq.isLocked) {
+      p = mlfq.urgent_process;
     }
+    else{
+      struct proc* L2_cand = 0;
+      for(level = 0; level < NUM_QUEUES; level++) { //Start from L0 to L2
+        for(p = mlfq.L[level].head; p != 0; p = p->next) { // Search till the end of the linked list queue.
+          
+          if(p->state != RUNNABLE)
+            continue;
+
+          if(p->q_number != level) {
+              panic("Contaminated MLFQ queue.");
+          }
+
+          if(p->q[level] >= mlfq.L[level].quantom) { //If this process spent all quantoms available from the queue it belongs.
+
+            p->q[level] = 0; //Once the priority/queue modification occured, reset the quantom count of this process for L[level]
+
+            //L2: This process must be promoted
+            if(level == 2) { //The promoted process may also be serviced!
+              if(p->priority > 0) {
+                p->priority--;
+              }
+            }
+            //L0~L1: This process must be sent to the lower level queue.
+            //FIXME: The original queue must be concatenated. (if L0-> L1, concat L0) -> Implement doubly linked list.
+            else {
+              if(p == mlfq.L[level].tail) { //if p is the tail of the queue, update tail
+                mlfq.L[level].tail = p->prev;
+              }
+              if(p->prev) { //if p is not the head, concat
+                p->prev->next = p->next;
+              } else{ //if p is the head, update head
+                mlfq.L[level].head = p->next;
+              }
+              p->next = 0; //When demoted, the process must attach to the tail.
+              if(mlfq.L[level+1].head) { //if the lower level queue is not empty
+                mlfq.L[level+1].tail->next = p;
+                mlfq.L[level+1].tail = p;
+              } else{
+                mlfq.L[level+1].head = p;
+                mlfq.L[level+1].tail = p;
+              }
+              p->q_number++;
+              continue; //This process must be skipped. (It will be serviced in the next iteration.)
+            }
+          }
+          break;
+        }
+        if(p) { //If a candidate Found
+          if(level != NUM_QUEUES-1) { //if L2
+            if(!L2_cand || L2_cand->priority > p->priority) { //If L2_cand is not set or the priority of the current candidate is higher than the previous one.
+              L2_cand = p;
+            }
+          }
+          else {
+            break;
+          }
+        }
+      }  
+    }
+
+
+    //Process to be serviced chosen.
+    p->q[level]++;
+    p->q_ticks_total++;
+
+
+    // Switch to chosen process.  It is the process's job
+    // to release ptable.lock and then reacquire it
+    // before jumping back to us.
+    c->proc = p;
+    switchuvm(p);
+    p->state = RUNNING;
+
+    swtch(&(c->scheduler), p->context);
+    switchkvm();
+
+    // Process is done running for now.
+    // It should have changed its p->state before coming back.
+    c->proc = 0;
+  
+    release(&mlfq.lock);
     release(&ptable.lock);
 
   }
