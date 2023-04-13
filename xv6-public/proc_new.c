@@ -19,7 +19,7 @@ static struct proc *initproc;
 int nextpid = 1;
 
 struct MLFQ{
-  struct spinlock lock;
+  //struct spinlock lock;
   struct queue L[NUM_QUEUES];
   int isLocked;
   struct proc* urgent_process;
@@ -41,7 +41,7 @@ pinit(void)
 void 
 MLFQinit(void) {
   int i;
-  initlock(&mlfq.lock, "mlfq");
+  //initlock(&mlfq.lock, "mlfq");
   initlock(&mlfq_tick.lock, "mlfq_tick");
   for(i = 0; i < NUM_QUEUES; i++) {
     mlfq.L[i].level = i;
@@ -160,7 +160,7 @@ found:
   p->context->eip = (uint)forkret;
 
   acquire(&ptable.lock);
-  acquire(&mlfq.lock);
+  //acquire(&mlfq.lock);
   cprintf("allocproc\n");
   if(mlfq.L[0].head == 0) { //if L0 is empty
     cprintf("L0 empty\n"); //debug
@@ -178,7 +178,7 @@ found:
     mlfq.L[0].tail = p;
   }
   cprintf("end\n");
-  release(&mlfq.lock);
+  //release(&mlfq.lock);
   release(&ptable.lock);
 
   return p;
@@ -435,7 +435,7 @@ scheduler(void)
       c->proc = 0;
     }*/
     int level;
-    acquire(&mlfq.lock);
+    //acquire(&mlfq.lock);
     if(mlfq.isLocked) {
       p = mlfq.urgent_process;
     }
@@ -524,7 +524,7 @@ scheduler(void)
     // It should have changed its p->state before coming back.
     c->proc = 0;
   
-    release(&mlfq.lock);
+    //release(&mlfq.lock);
     release(&ptable.lock);
 
   }
@@ -736,7 +736,7 @@ MLFQreset(void) {
   cprintf("MLFQ reset!\n");
 
   acquire(&ptable.lock);
-  acquire(&mlfq.lock);
+  //acquire(&mlfq.lock);
 
   schedulerUnlockChecked();
 
@@ -774,7 +774,7 @@ MLFQreset(void) {
     mlfq.L[level].tail = 0;
   }
 
-  release(&mlfq.lock);
+  //release(&mlfq.lock);
   release(&ptable.lock);
 }
 
@@ -792,17 +792,17 @@ void setPriority(int pid, int priority) {
   }
 
   acquire(&ptable.lock);
-  acquire(&mlfq.lock);
+  //acquire(&mlfq.lock);
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
     if(p->pid == pid) {
       p->priority = priority;
-      release(&mlfq.lock);
+      //release(&mlfq.lock);
       release(&ptable.lock);
       return;
     }
   }
-  release(&mlfq.lock);
+  //release(&mlfq.lock);
   release(&ptable.lock); 
   cprintf("No process with pid %d found.\n", pid);
 }
@@ -816,10 +816,12 @@ void schedulerLock(int password) {
   if(password == SCHEDULER_LOCK_PASSWORD && !mlfq.isLocked) {
     //To-Dos:
     //reset global tick counter -> done, April 12nd 2023
-    acquire(&mlfq.lock);
+    //acquire(&mlfq.lock);
+    acquire(&ptable.lock);
     mlfq.isLocked = 1;
     mlfq.urgent_process = p;
-    release(&mlfq.lock);
+    //release(&mlfq.lock);
+    release(&ptable.lock);
     acquire(&mlfq_tick.lock);
     mlfq_tick.global_tick = 0;
     release(&mlfq_tick.lock);
@@ -872,9 +874,9 @@ void schedulerUnlock(int password) {
     //To-Dos:
     //reset global tick counter -> done, April 12nd 2023
     acquire(&ptable.lock);
-    acquire(&mlfq.lock);
+    //acquire(&mlfq.lock);
     schedulerUnlockChecked();
-    release(&mlfq.lock);
+    //release(&mlfq.lock);
     release(&ptable.lock);
 
     //Uncomment this when you want to reset the global tick counter.
