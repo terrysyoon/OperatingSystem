@@ -1,6 +1,9 @@
+#ifndef __PROC_NEW_H__
+#define __PROC_NEW_H__
+
 #define NUM_QUEUES (3)
 #define SCHEDULER_LOCK_PASSWORD (2021078059)
-//#include "spinlock.h"
+#include "spinlock.h"
 // Per-CPU state
 struct cpu {
   uchar apicid;                // Local APIC ID
@@ -91,3 +94,4 @@ struct MLFQ_TICK{
 //   original data and bss
 //   fixed-size stack
 //   expandable heap
+#endif

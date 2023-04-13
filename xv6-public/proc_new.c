@@ -5,7 +5,9 @@
 #include "mmu.h"
 #include "x86.h"
 #include "proc_new.h"
-#include "spinlock.h"
+#ifndef __PROC_NEW_H__
+  #include "spinlock.h"
+#endif
 
 struct {
   struct spinlock lock;
@@ -403,7 +405,8 @@ scheduler(void)
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
-  
+  cprintf("Scheduler begin!\n");
+  procdump();
   for(;;){
     // Enable interrupts on this processor.
     sti();
@@ -436,6 +439,7 @@ scheduler(void)
       p = mlfq.urgent_process;
     }
     else{
+      cprintf("Scheduler not locked\n");
       struct proc* L2_cand = 0;
       for(level = 0; level < NUM_QUEUES; level++) { //Start from L0 to L2
         for(p = mlfq.L[level].head; p != 0; p = p->next) { // Search till the end of the linked list queue.
@@ -482,13 +486,17 @@ scheduler(void)
           }
           break;
         }
+        cprintf("End of Loop>");
+        procdump();
         if(p) { //If a candidate Found
-          if(level != NUM_QUEUES-1) { //if L2
+          cprintf("Candidate Found : %d\n", p->pid);
+          if(level == NUM_QUEUES-1) { //if L2
             if(!L2_cand || L2_cand->priority > p->priority) { //If L2_cand is not set or the priority of the current candidate is higher than the previous one.
               L2_cand = p;
             }
           }
           else {
+            p->q[p->q_number]++; //increase consumed time quamtom
             break;
           }
         }
@@ -497,20 +505,21 @@ scheduler(void)
 
 
     //Process to be serviced chosen.
-    p->q[level]++;
+    //p->q[p->q_number]++;
     p->q_ticks_total++;
 
 
     // Switch to chosen process.  It is the process's job
     // to release ptable.lock and then reacquire it
     // before jumping back to us.
+    cprintf("Start switching\n");
     c->proc = p;
     switchuvm(p);
     p->state = RUNNING;
 
     swtch(&(c->scheduler), p->context);
     switchkvm();
-
+    cprintf("Finished 1tick\n");
     // Process is done running for now.
     // It should have changed its p->state before coming back.
     c->proc = 0;
@@ -712,6 +721,7 @@ procdump(void)
       for(i=0; i<10 && pc[i] != 0; i++)
         cprintf(" %p", pc[i]);
     }
+    cprintf(" L%d %d", p->q_number, p->q[p->q_number]);
     cprintf("\n");
   }
 }
@@ -720,6 +730,9 @@ procdump(void)
 void 
 MLFQreset(void) {
   struct proc *p;
+
+  cprintf("MLFQ reset!\n");
+
   acquire(&ptable.lock);
   acquire(&mlfq.lock);
 
