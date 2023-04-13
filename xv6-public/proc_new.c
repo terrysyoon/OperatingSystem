@@ -623,8 +623,14 @@ wakeup1(void *chan)
   struct proc *p;
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-    if(p->state == SLEEPING && p->chan == chan)
+    if(p->state == SLEEPING && p->chan == chan){
       p->state = RUNNABLE;
+      int i = 0;
+      for(i = 0; i < NUM_QUEUES; i++) {
+        p->q[i] = 0;
+      }
+    }
+ 
 }
 
 // Wake up all processes sleeping on chan.
@@ -649,8 +655,13 @@ kill(int pid)
     if(p->pid == pid){
       p->killed = 1;
       // Wake process from sleep if necessary.
-      if(p->state == SLEEPING)
+      if(p->state == SLEEPING) { 
+        int i;
         p->state = RUNNABLE;
+        for(i = 0; i < NUM_QUEUES; i++) {
+        p->q[i] = 0;
+        }
+      }
       release(&ptable.lock);
       return 0;
     }
