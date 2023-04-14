@@ -411,6 +411,9 @@ scheduler(void)
   struct cpu *c = mycpu();
   c->proc = 0;
   cprintf("Scheduler begin!\n");
+  if(!(c->started)) {
+    panic("cpu not start!");
+  }
   procdump();
   for(;;){
     // Enable interrupts on this processor.
