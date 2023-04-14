@@ -420,6 +420,7 @@ scheduler(void)
     //exit(); //debug
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
+    //cprintf("scheduler!\n");
     /*
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
@@ -497,7 +498,7 @@ scheduler(void)
           break;
         }
         cprintf("End of Loop>");
-        procdump();
+        //procdump();
         if(p) { //If a candidate Found
           cprintf("Candidate Found : %d\n", p->pid);
           if(level == last_level && ((!pass_lastserv) || (p == last_serv))) {
@@ -523,6 +524,7 @@ scheduler(void)
     }
 
     if(L2_cand) p = L2_cand;
+    if(!p) p = last_serv; //FIX
     //Process to be serviced chosen.
     //p->q[p->q_number]++;
     if(!mlfq.isLocked) {
@@ -555,6 +557,7 @@ scheduler(void)
     release(&ptable.lock);
 
   }
+  panic("Scheduler terminated!");
 }
 
 // Enter scheduler.  Must hold only ptable.lock

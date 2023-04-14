@@ -55,7 +55,8 @@ trap(struct trapframe *tf)
       ticks++;
       wakeup(&ticks);
       release(&tickslock);
-
+      //cprintf("Timeout! \n");
+      //procdump();
       // MLFQ
       acquire(&mlfq_tick.lock);
       mlfq_tick.global_tick++;
@@ -63,6 +64,7 @@ trap(struct trapframe *tf)
       release(&mlfq_tick.lock);
         if(mlfq_tick.global_tick % 100 == 0){
         cprintf("global_tick: %d\n", mlfq_tick.global_tick);
+        panic("100tick");
       }
     }
     lapiceoi();
