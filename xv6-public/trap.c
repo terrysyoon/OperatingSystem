@@ -3,7 +3,7 @@
 #include "param.h"
 #include "memlayout.h"
 #include "mmu.h"
-#include "proc_new.h"
+#include "proc.h"
 #include "x86.h"
 #include "traps.h"
 #include "spinlock.h"
@@ -56,7 +56,7 @@ trap(struct trapframe *tf)
       wakeup(&ticks);
       release(&tickslock);
       //cprintf("Timeout! \n");
-      //procdump();
+      procdump();
       // MLFQ
       acquire(&mlfq_tick.lock);
       mlfq_tick.global_tick++;
@@ -64,7 +64,7 @@ trap(struct trapframe *tf)
       release(&mlfq_tick.lock);
         if(mlfq_tick.global_tick % 100 == 0){
         cprintf("global_tick: %d\n", mlfq_tick.global_tick);
-        panic("100tick");
+        //panic("100tick");
       }
     }
     lapiceoi();
