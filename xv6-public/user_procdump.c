@@ -1,13 +1,13 @@
 #include "types.h" 
+#include "defs.h"
 #include "stat.h" 
 #include "user.h"
 
+extern void procdump();
 
 int
 main(int argc, char *argv[]) {
-    int ret_val;
     printf(1, "Procdump\n");
-    ret_val = procdump();
-    printf(1, "Return value : 0x%x\n", ret_val); 
+    procdump();
     exit();
 };

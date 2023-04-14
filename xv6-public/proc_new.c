@@ -402,6 +402,11 @@ wait(void)
 void
 scheduler(void)
 {
+
+  struct proc* last_serv = 0;
+  int last_level = -1;
+  int pass_lastserv = 0;
+
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
@@ -442,8 +447,13 @@ scheduler(void)
     else{
       cprintf("Scheduler not locked\n");
       for(level = 0; level < NUM_QUEUES; level++) { //Start from L0 to L2
+        pass_lastserv = 0;
         for(p = mlfq.L[level].head; p != 0; p = p->next) { // Search till the end of the linked list queue.
-          
+        
+          if(p == last_serv) {
+            pass_lastserv = 1;
+          }
+
           if(p->state != RUNNABLE)
             continue;
 
@@ -490,6 +500,15 @@ scheduler(void)
         procdump();
         if(p) { //If a candidate Found
           cprintf("Candidate Found : %d\n", p->pid);
+          if(level == last_level && ((!pass_lastserv) || (p == last_serv))) {
+            if(p == last_serv) {
+              cprintf("This process is alrady served!");
+            }
+            else {
+              cprintf("Process before the last served process!\n");
+            }
+            continue;
+          }
           if(level == NUM_QUEUES-1) { //if L2
             if(!L2_cand || L2_cand->priority > p->priority) { //If L2_cand is not set or the priority of the current candidate is higher than the previous one.
               L2_cand = p;
@@ -506,6 +525,13 @@ scheduler(void)
     if(L2_cand) p = L2_cand;
     //Process to be serviced chosen.
     //p->q[p->q_number]++;
+    if(!mlfq.isLocked) {
+      last_serv = p;
+      last_level = level;
+    } else{
+      last_serv = 0;
+      last_level = -1;
+    }
     p->q_ticks_total++;
 
 
@@ -513,6 +539,7 @@ scheduler(void)
     // to release ptable.lock and then reacquire it
     // before jumping back to us.
     cprintf("Start switching\n");
+    last_serv = p;
     c->proc = p;
     switchuvm(p);
     p->state = RUNNING;
