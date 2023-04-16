@@ -40,7 +40,7 @@ trap(struct trapframe *tf)
 {
   if(tf->trapno == T_SYSCALL){
     //cprintf("syscall: %d\n", myproc()->pid);
-    panic("syscalled");
+    //panic("DEBUG: syscalled | DUMMY PANIC");
     if(myproc()->killed)
       exit();
     myproc()->tf = tf;
@@ -58,14 +58,14 @@ trap(struct trapframe *tf)
       wakeup(&ticks);
       release(&tickslock);
       //cprintf("Timeout! \n");
-      procdump();
+      //procdump();
       // MLFQ
       acquire(&mlfq_tick.lock);
       mlfq_tick.global_tick++;
       wakeup(&mlfq_tick.global_tick);
       release(&mlfq_tick.lock);
         if(mlfq_tick.global_tick % 100 == 0){
-        cprintf("global_tick: %d\n", mlfq_tick.global_tick);
+        //cprintf("global_tick: %d\n", mlfq_tick.global_tick);
         //panic("100tick");
       }
     }

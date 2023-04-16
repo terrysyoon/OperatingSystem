@@ -1,3 +1,5 @@
+//#define __DEBUG__
+
 #include "types.h"
 #include "defs.h"
 #include "param.h"
@@ -161,15 +163,20 @@ found:
 
   acquire(&ptable.lock);
   //acquire(&mlfq.lock);
+  #ifdef __DEBUG__
   cprintf("allocproc\n");
+  #endif
   if(mlfq.L[0].head == 0) { //if L0 is empty
+  #ifdef __DEBUG__
     cprintf("L0 empty\n"); //debug
+    #endif
     mlfq.L[0].head = p;
     p->prev = 0; //p is the first element of the doubly ll. Seems unneccesary but to be sure.
   }
   else{
+    #ifdef __DEBUG__
     cprintf("L0 not empty\n"); //debug
-
+#endif
     //Create double link
     p->prev = mlfq.L[0].tail;
     mlfq.L[0].tail -> next = p;
@@ -177,7 +184,9 @@ found:
     //Update tail
     mlfq.L[0].tail = p;
   }
+  #ifdef __DEBUG__
   cprintf("end\n");
+  #endif
   //release(&mlfq.lock);
   release(&ptable.lock);
 
@@ -191,7 +200,9 @@ userinit(void)
 {
   struct proc *p;
   extern char _binary_initcode_start[], _binary_initcode_size[];
+  #ifdef __DEBUG__
   cprintf("user init begin\n");//debug
+  #endif
   p = allocproc();
   
   initproc = p;
@@ -220,7 +231,9 @@ userinit(void)
   p->state = RUNNABLE;
 
   release(&ptable.lock);
+  #ifdef __DEBUG__
   cprintf("user init end\n");
+  #endif
   //sleep(5);
 }
 
@@ -410,7 +423,9 @@ scheduler(void)
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
+  #ifdef __DEBUG__
   cprintf("Scheduler begin!\n");
+  #endif
   if(!(c->started)) {
     panic("cpu not start!");
   }
@@ -449,7 +464,9 @@ scheduler(void)
       p = mlfq.urgent_process;
     }
     else{
+      #ifdef __DEBUG__
       cprintf("Scheduler not locked\n");
+      #endif
       for(level = 0; level < NUM_QUEUES; level++) { //Start from L0 to L2
         pass_lastserv = 0;
         for(p = mlfq.L[level].head; p != 0; p = p->next) { // Search till the end of the linked list queue.
@@ -500,16 +517,24 @@ scheduler(void)
           }
           break;
         }
+        #ifdef __DEBUG__
         cprintf("End of Loop>");
+        #endif
         //procdump();
         if(p) { //If a candidate Found
+        #ifdef __DEBUG__
           cprintf("Candidate Found : %d\n", p->pid);
+          #endif
           if(level == last_level && ((!pass_lastserv) || (p == last_serv))) {
             if(p == last_serv) {
+              #ifdef __DEBUG__
               cprintf("This process is alrady served!");
+              #endif
             }
             else {
+              #ifdef __DEBUG__
               cprintf("Process before the last served process!\n");
+              #endif
             }
             continue;
           }
@@ -543,8 +568,10 @@ scheduler(void)
     // Switch to chosen process.  It is the process's job
     // to release ptable.lock and then reacquire it
     // before jumping back to us.
+    #ifdef __DEBUG__
     cprintf("Start switching\n");
     cprintf("ncli: %d\n", c->ncli);
+    #endif
     last_serv = p;
     c->proc = p;
     switchuvm(p);
@@ -552,7 +579,9 @@ scheduler(void)
 
     swtch(&(c->scheduler), p->context);
     switchkvm();
+    #ifdef __DEBUG__
     cprintf("Finished 1tick\n");
+    #endif
     // Process is done running for now.
     // It should have changed its p->state before coming back.
     c->proc = 0;
@@ -595,7 +624,10 @@ sched(void)
 // Give up the CPU for one scheduling round.
 void
 yield(void) //must be altered for this project. no signature change required.
-{  cprintf("yield called\n");
+{  
+  #ifdef __DEBUG__
+  cprintf("yield called\n");
+  #endif
   //FIXME: nonpreemptive yield가 아니면 여기서 초기화 하면 안되는데
   struct proc *p;
   acquire(&ptable.lock);  //DOC: yieldlock
