@@ -151,6 +151,9 @@ userinit(void)
   p->state = RUNNABLE;
 
   release(&ptable.lock);
+
+  cprintf("=user init fin=");
+  procdump();
 }
 
 // Grow current process's memory by n bytes.
@@ -336,6 +339,8 @@ scheduler(void)
       if(p->state != RUNNABLE)
         continue;
 
+
+      cprintf("switch ncli: %d\n", c->ncli);
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
