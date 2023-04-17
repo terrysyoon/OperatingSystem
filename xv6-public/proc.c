@@ -371,7 +371,7 @@ exit(void)
     }
   }
 
-
+/* 할당 해제 시 큐에서 지우도록
   //Remove from MLFQ queue
   if(curproc->prev) { //if this process is not head
     curproc->prev->next = curproc->next;
@@ -379,7 +379,7 @@ exit(void)
   else { //if this process is head
     mlfq.L[curproc->q_number].head = curproc->next;
   }
-
+*/
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
   sched();
@@ -567,8 +567,20 @@ scheduler(void)
               //struct proc* temp = p;
               //temp->prev->next = temp->next;
               cprintf("remove body\n");
-              if(p->prev) p->prev->next = p->next;
-              if(p->next) p->next->prev = p->prev;
+              if(p->prev) {
+                cprintf("prev: %d\n",p->prev->pid);
+                p->prev->next = p->next;
+              }else {
+                cprintf("prev null\n");
+              }
+              if(p->next) {
+                cprintf("next: %d\n", p->next->pid);
+                p->next->prev = p->prev;
+              }
+              else {
+                cprintf("next null\n");
+              }
+              lookQueue();
             }
 
             //p->prev = 0;
@@ -585,6 +597,8 @@ scheduler(void)
               mlfq.L[level+1].tail = p;
             }
             p->q_number++;
+
+            lookQueue();
             continue; //This process must be skipped. (It will be serviced in the next iteration.)
           }
 
@@ -803,6 +817,8 @@ sleep(void *chan, struct spinlock *lk)
   p->chan = chan;
   p->state = SLEEPING;
 
+  p->q[p->q_number] = 0;
+
   sched();
 
   // Tidy up.
@@ -913,25 +929,32 @@ procdump(void)
 void 
 MLFQreset(void) {
   struct proc *p;
-
+  struct proc *pn;
   cprintf("MLFQ reset!\n");
+  procdump();
+  lookQueue();
 
   acquire(&ptable.lock);
   //acquire(&mlfq.lock);
 
-  schedulerUnlockChecked();
+  if(mlfq.isLocked) schedulerUnlockChecked();
 
   int level;
   for(level = 0; level < NUM_QUEUES; level++) {
-    for(p = mlfq.L[level].head; p != 0; p = p->next) {
+    //cprintf("level: %d\n",level);
+    for(p = mlfq.L[level].head; p != 0; p = pn) {
+      pn = p->next;
+      //cprintf("pid: %d\n",p->pid);
 
       //FIXME: is this condition necessary? Or should I make this condition more inclusive?
       //if(p->state == RUNNABLE) { //is this condition necessary?
       //if(p->state != ZOMBIE) {
+
+        /*
       if(1) {
         p->q_number = 0;
         p->priority = 3;
-        p->q_ticks = 0;
+        //p->q_ticks = 0;
         int i;
         for(i = 0; i < NUM_QUEUES; i++) {
           p->q[i] = 0;
@@ -946,6 +969,36 @@ MLFQreset(void) {
         }
       } else{
         p->priority = 3;
+      }*/
+      p->q_number = 0;
+      p->priority = 3;
+      //p->q_ticks = 0;
+      int i;
+      for(i = 0; i < NUM_QUEUES; i++) {
+        p->q[i] = 0;
+      }
+
+      if(level == 0) continue; //moving queue is not required if this process already belongs to L0
+
+      p->prev = 0;
+      p->next = 0;
+
+      if(!mlfq.L[0].head) //if L0 is empty, make this process the head. 
+      {
+        mlfq.L[0].head = p;
+        mlfq.L[0].tail = p;
+      } 
+      else
+      {
+        p->prev = mlfq.L[0].tail;
+        if(mlfq.L[0].tail) mlfq.L[0].tail->next = p;
+        else{
+          procdump();
+          lookQueue();
+          panic("cannot find tail of L0");
+        }
+        mlfq.L[0].tail = p;
+        mlfq.L[0].tail->next = 0; //remove possible cycle.
       }
     }
   }
@@ -957,6 +1010,10 @@ MLFQreset(void) {
 
   //release(&mlfq.lock);
   release(&ptable.lock);
+
+  cprintf("after reset\n");
+  procdump();
+  lookQueue();
 }
 
 int getLevel() {
@@ -1026,7 +1083,7 @@ void schedulerUnlockChecked() {
     for(i = 0; i < NUM_QUEUES; i++) {
       mlfq.urgent_process->q[i] = 0;
     }
-    mlfq.urgent_process->q_ticks = 0;
+    //mlfq.urgent_process->q_ticks = 0;
     //urgent process to the head of L0
     mlfq.urgent_process->q_number = 0;
     //if L0 is not empty, then urgent process is the head of L0.

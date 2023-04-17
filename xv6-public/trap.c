@@ -68,6 +68,7 @@ trap(struct trapframe *tf)
         //cprintf("global_tick: %d\n", mlfq_tick.global_tick);
         //panic("100tick");
         //procdump();
+        MLFQreset();
       }
     }
     lapiceoi();
