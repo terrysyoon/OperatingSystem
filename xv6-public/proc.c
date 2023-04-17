@@ -100,6 +100,20 @@ myproc(void) {
   return p;
 }
 
+void
+lookQueue(void) {
+  int i;
+  struct proc* p;
+  for(i = 0; i < NUM_QUEUES; i++) {
+    cprintf("L%d: ",i);
+    for(p = mlfq.L[i].head; p != 0; p=p->next) {
+      cprintf("%d ", p->pid);
+    }
+    cprintf("\n");
+  }
+}
+
+
 //PAGEBREAK: 32
 // Look in the process table for an UNUSED proc.
 // If found, change state to EMBRYO and initialize
@@ -110,7 +124,8 @@ allocproc(void)
 {
   struct proc *p;
   char *sp;
-
+  cprintf("alloc proc!\n");
+  procdump();
   acquire(&ptable.lock);
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
@@ -168,16 +183,17 @@ found:
   cprintf("allocproc\n");
   #endif
   if(mlfq.L[0].head == 0) { //if L0 is empty
-  #ifdef __DEBUG__
+  //#ifdef __DEBUG__
     cprintf("L0 empty\n"); //debug
-    #endif
+    //#endif
     mlfq.L[0].head = p;
+    mlfq.L[0].tail = p;
     p->prev = 0; //p is the first element of the doubly ll. Seems unneccesary but to be sure.
   }
   else{
-    #ifdef __DEBUG__
-    cprintf("L0 not empty\n"); //debug
-#endif
+//    #ifdef __DEBUG__
+    cprintf("L0 not empty: %d\n", mlfq.L[0].head->pid); //debug
+//#endif
     //Create double link
     p->prev = mlfq.L[0].tail;
     mlfq.L[0].tail -> next = p;
@@ -469,7 +485,9 @@ scheduler(void)
             continue;
 
           if(p->q_number != level) {
-              cprintf("L%d q:%d", level, p->q_number);
+              //cprintf("L%d q:%d", level, p->q_number);
+              procdump();
+              lookQueue();
               panic("Contaminated MLFQ queue.");
           }
 
@@ -479,16 +497,21 @@ scheduler(void)
             //L0~L1: This process must be sent to the lower level queue.
             //FIXME: The original queue must be concatenated. (if L0-> L1, concat L0) -> Implement doubly linked list.
           
-            
+            if(p == mlfq.L[level].head) {
+              mlfq.L[level].head = p->next;
+            }
 
             if(p == mlfq.L[level].tail) { //if p is the tail of the queue, update tail
               mlfq.L[level].tail = p->prev;
+              if(mlfq.L[level].tail) mlfq.L[level].tail->next = 0;
             }
             if(p->prev) { //if p is not the head, concat
               p->prev->next = p->next;
             } else{ //if p is the head, update head
               mlfq.L[level].head = p->next;
             }
+
+            //p->prev = 0;
             p->next = 0; //When demoted, the process must attach to the tail.
 
             if(mlfq.L[level+1].head) { //if the lower level queue is not empty
@@ -562,8 +585,17 @@ scheduler(void)
     //procdump();
     if(!p)
     {
+      /*
+      cprintf("!!L0: ");
+      if(mlfq.L[0].head) cprintf("%d",mlfq.L[0].head->pid);
+      cprintf("\n!!L1: ");
+      if(mlfq.L[1].head) cprintf("%d",mlfq.L[1].head->pid);
+      cprintf("\n!!L2: ");
+      if(mlfq.L[2].head) cprintf("%d",mlfq.L[2].head->pid);
+      cprintf("\n");
+      */
       release(&ptable.lock);
-      procdump();
+      //procdump();
       continue;
       panic("No runnable proc!");
     }
