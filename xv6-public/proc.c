@@ -11,6 +11,7 @@
   #include "spinlock.h"
 #endif
 
+#define __FORK_DEBUG__
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -272,7 +273,11 @@ fork(void)
   if((np = allocproc()) == 0){
     return -1;
   }
+  #ifdef __FORK_DEBUG__
 
+  cprintf("before fork\n");
+  procdump();
+#endif
   // Copy process state from proc.
   if((np->pgdir = copyuvm(curproc->pgdir, curproc->sz)) == 0){
     kfree(np->kstack);
@@ -301,6 +306,10 @@ fork(void)
   np->state = RUNNABLE;
 
   release(&ptable.lock);
+  #ifdef __FORK_DEBUG__
+  cprintf("after fork\n");
+  procdump();
+  #endif
 
   return pid;
 }
@@ -628,6 +637,7 @@ yield(void) //must be altered for this project. no signature change required.
   #ifdef __DEBUG__
   cprintf("yield called\n");
   #endif
+  //cprintf("yield: %d\n", myproc()->pid);
   //FIXME: nonpreemptive yield가 아니면 여기서 초기화 하면 안되는데
   struct proc *p;
   acquire(&ptable.lock);  //DOC: yieldlock
