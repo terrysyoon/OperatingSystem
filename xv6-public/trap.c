@@ -64,7 +64,7 @@ trap(struct trapframe *tf)
       mlfq_tick.global_tick++;
       wakeup(&mlfq_tick.global_tick);
       //release(&mlfq_tick.lock);
-        if(mlfq_tick.global_tick % 100 == 0){
+      if(mlfq_tick.global_tick % 100 == 0){
         //cprintf("global_tick: %d\n", mlfq_tick.global_tick);
         //panic("100tick");
         //procdump();
@@ -101,6 +101,8 @@ trap(struct trapframe *tf)
       if(myproc() == 0) cprintf("my proc fualt");
       cprintf("unexpected trap %d from cpu %d eip %x (cr2=0x%x)\n",
               tf->trapno, cpuid(), tf->eip, rcr2());
+      procdump();
+      lookQueue();
       panic("trap");
     }
     // In user space, assume process misbehaved.

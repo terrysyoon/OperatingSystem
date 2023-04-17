@@ -105,7 +105,7 @@ lookQueue(void) {
   int i;
   struct proc* p;
   for(i = 0; i < NUM_QUEUES; i++) {
-    cprintf("L%d: ",i);
+    cprintf("L%d: H%d T%d | ",i,(mlfq.L[i].head)?mlfq.L[i].head->pid:0, (mlfq.L[i].tail)?mlfq.L[i].tail->pid:0);
     for(p = mlfq.L[i].head; p != 0; p=p->next) {
       cprintf("%d ", p->pid);
     }
@@ -414,6 +414,36 @@ wait(void)
         p->name[0] = 0;
         p->killed = 0;
         p->state = UNUSED;
+
+        cprintf("delete dead from queue\n");
+        procdump();
+        if(p == mlfq.L[p->q_number].head && p == mlfq.L[p->q_number].tail) {
+          cprintf("remove head&tail\n");
+          mlfq.L[p->q_number].head = 0;
+          mlfq.L[p->q_number].tail = 0;
+        } else if(p == mlfq.L[p->q_number].head) {
+          cprintf("remove head\n");
+          cprintf("Head: %d\n",mlfq.L[p->q_number].head->pid);
+          if(mlfq.L[p->q_number].tail) {
+            cprintf("Tail: %d\n", mlfq.L[p->q_number].tail->pid );
+          }
+          else {
+            cprintf("Tail: NULL");
+          }
+          mlfq.L[p->q_number].head = p->next;
+          if(mlfq.L[p->q_number].head->next) mlfq.L[p->q_number].head->next->prev = mlfq.L[p->q_number].head; //check for nullptr
+        } else if(p == mlfq.L[p->q_number].tail) {
+          cprintf("remove tail\n");
+          mlfq.L[p->q_number].tail = p->prev;
+          if(mlfq.L[p->q_number].tail) mlfq.L[p->q_number].tail->next = 0;
+        } else {
+          //struct proc* temp = p;
+          //temp->prev->next = temp->next;
+          cprintf("remove body\n");
+          if(p->prev) p->prev->next = p->next;
+          if(p->next) p->next->prev = p->prev;
+        }
+        procdump();
         release(&ptable.lock);
         return pid;
       }
@@ -497,6 +527,8 @@ scheduler(void)
             //L0~L1: This process must be sent to the lower level queue.
             //FIXME: The original queue must be concatenated. (if L0-> L1, concat L0) -> Implement doubly linked list.
           
+          
+          /*
             if(p == mlfq.L[level].head) {
               mlfq.L[level].head = p->next;
             }
@@ -510,14 +542,45 @@ scheduler(void)
             } else{ //if p is the head, update head
               mlfq.L[level].head = p->next;
             }
+            */
+            cprintf("L%d P:%d: ",level, p->pid);
+            if(p == mlfq.L[level].head && p == mlfq.L[level].tail) {
+              cprintf("remove head&tail\n");
+              mlfq.L[level].head = 0;
+              mlfq.L[level].tail = 0;
+            } else if(p == mlfq.L[level].head) {
+              cprintf("remove head\n");
+              cprintf("Head: %d\n",mlfq.L[level].head->pid);
+              if(mlfq.L[level].tail) {
+                cprintf("Tail: %d\n", mlfq.L[level].tail->pid );
+              }
+              else {
+                cprintf("Tail: NULL");
+              }
+              mlfq.L[level].head = p->next;
+              if(mlfq.L[level].head->next) mlfq.L[level].head->next->prev = mlfq.L[level].head; //check for nullptr
+            } else if(p == mlfq.L[level].tail) {
+              cprintf("remove tail\n");
+              mlfq.L[level].tail = p->prev;
+              if(mlfq.L[level].tail) mlfq.L[level].tail->next = 0;
+            } else {
+              //struct proc* temp = p;
+              //temp->prev->next = temp->next;
+              cprintf("remove body\n");
+              if(p->prev) p->prev->next = p->next;
+              if(p->next) p->next->prev = p->prev;
+            }
 
             //p->prev = 0;
             p->next = 0; //When demoted, the process must attach to the tail.
 
             if(mlfq.L[level+1].head) { //if the lower level queue is not empty
+              cprintf("Attach tail: L%d\n",level+1);
+              p->prev = mlfq.L[level+1].tail;
               mlfq.L[level+1].tail->next = p;
               mlfq.L[level+1].tail = p;
             } else{
+              cprintf("Create head: L%d\n",level+1);
               mlfq.L[level+1].head = p;
               mlfq.L[level+1].tail = p;
             }

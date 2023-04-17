@@ -192,6 +192,7 @@ void            clearpteu(pde_t *pgdir, char *uva);
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
 
 //proc_new.c
+void lookQueue(void);
 void MLFQinit(void);
 void MLFQreset();
 int getLevel();
