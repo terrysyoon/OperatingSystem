@@ -1,5 +1,7 @@
 #pragma once
 
+//#define __DEBUG_0416__
+
 struct buf;
 struct context;
 struct file;

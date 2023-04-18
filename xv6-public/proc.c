@@ -124,8 +124,10 @@ allocproc(void)
 {
   struct proc *p;
   char *sp;
+  #ifdef __DEBUG_0416__
   cprintf("alloc proc!\n");
   procdump();
+  #endif
   acquire(&ptable.lock);
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
@@ -184,7 +186,9 @@ found:
   #endif
   if(mlfq.L[0].head == 0) { //if L0 is empty
   //#ifdef __DEBUG__
+    #ifdef __DEBUG__0416__
     cprintf("L0 empty\n"); //debug
+    #endif
     //#endif
     mlfq.L[0].head = p;
     mlfq.L[0].tail = p;
@@ -192,7 +196,9 @@ found:
   }
   else{
 //    #ifdef __DEBUG__
+  #ifdef __DEBUG__0416__
     cprintf("L0 not empty: %d\n", mlfq.L[0].head->pid); //debug
+      #endif
 //#endif
     //Create double link
     p->prev = mlfq.L[0].tail;
@@ -316,12 +322,16 @@ fork(void)
   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
 
   pid = np->pid;
+  #ifdef __DEBUG__0416__
   cprintf("Forked: %d", pid);
+  #endif
 
   acquire(&ptable.lock);
 
   np->state = RUNNABLE;
+  #ifdef __DEBUG_0416__
   cprintf("set runble\n");
+  #endif
   release(&ptable.lock);
   #ifdef __FORK_DEBUG__
   cprintf("after fork\n");
@@ -415,35 +425,49 @@ wait(void)
         p->killed = 0;
         p->state = UNUSED;
 
+        #ifdef __DEBUG__0416__
         cprintf("delete dead from queue\n");
         procdump();
+        #endif
+
         if(p == mlfq.L[p->q_number].head && p == mlfq.L[p->q_number].tail) {
+            #ifdef __DEBUG__0416__
           cprintf("remove head&tail\n");
+          #endif
           mlfq.L[p->q_number].head = 0;
           mlfq.L[p->q_number].tail = 0;
         } else if(p == mlfq.L[p->q_number].head) {
+          #ifdef __DEBUG__0416__
           cprintf("remove head\n");
           cprintf("Head: %d\n",mlfq.L[p->q_number].head->pid);
+          
           if(mlfq.L[p->q_number].tail) {
             cprintf("Tail: %d\n", mlfq.L[p->q_number].tail->pid );
           }
           else {
             cprintf("Tail: NULL");
           }
+          #endif
           mlfq.L[p->q_number].head = p->next;
           if(mlfq.L[p->q_number].head->next) mlfq.L[p->q_number].head->next->prev = mlfq.L[p->q_number].head; //check for nullptr
         } else if(p == mlfq.L[p->q_number].tail) {
+          #ifdef __DEBUG__0416__
           cprintf("remove tail\n");
+          #endif
           mlfq.L[p->q_number].tail = p->prev;
           if(mlfq.L[p->q_number].tail) mlfq.L[p->q_number].tail->next = 0;
         } else {
           //struct proc* temp = p;
           //temp->prev->next = temp->next;
+          #ifdef __DEBUG__0416__
           cprintf("remove body\n");
+          #endif
           if(p->prev) p->prev->next = p->next;
           if(p->next) p->next->prev = p->prev;
         }
+        #ifdef __DEBUG__0416__
         procdump();
+        #endif
         release(&ptable.lock);
         return pid;
       }
@@ -543,12 +567,17 @@ scheduler(void)
               mlfq.L[level].head = p->next;
             }
             */
+            #ifdef __DEBUG__0416__
             cprintf("L%d P:%d: ",level, p->pid);
+            #endif
             if(p == mlfq.L[level].head && p == mlfq.L[level].tail) {
+              #ifdef __DEBUG__0416__
               cprintf("remove head&tail\n");
+              #endif
               mlfq.L[level].head = 0;
               mlfq.L[level].tail = 0;
             } else if(p == mlfq.L[level].head) {
+              #ifdef __DEBUG__0416__
               cprintf("remove head\n");
               cprintf("Head: %d\n",mlfq.L[level].head->pid);
               if(mlfq.L[level].tail) {
@@ -557,48 +586,68 @@ scheduler(void)
               else {
                 cprintf("Tail: NULL");
               }
+              #endif
               mlfq.L[level].head = p->next;
               if(mlfq.L[level].head->next) mlfq.L[level].head->next->prev = mlfq.L[level].head; //check for nullptr
             } else if(p == mlfq.L[level].tail) {
+              #ifdef __DEBUG__0416__
               cprintf("remove tail\n");
+              #endif
               mlfq.L[level].tail = p->prev;
               if(mlfq.L[level].tail) mlfq.L[level].tail->next = 0;
             } else {
               //struct proc* temp = p;
               //temp->prev->next = temp->next;
+              #ifdef __DEBUG__0416__
               cprintf("remove body\n");
+              #endif
               if(p->prev) {
+                #ifdef __DEBUG__0416__
                 cprintf("prev: %d\n",p->prev->pid);
+                #endif
                 p->prev->next = p->next;
-              }else {
+              }
+              #ifdef __DEBUG__0416__
+              else {
+                
                 cprintf("prev null\n");
               }
+              #endif
               if(p->next) {
+                #ifdef __DEBUG__0416__
                 cprintf("next: %d\n", p->next->pid);
+                #endif
                 p->next->prev = p->prev;
               }
+              #ifdef __DEBUG__0416__
               else {
                 cprintf("next null\n");
               }
               lookQueue();
+              #endif
             }
 
             //p->prev = 0;
             p->next = 0; //When demoted, the process must attach to the tail.
 
             if(mlfq.L[level+1].head) { //if the lower level queue is not empty
+              #ifdef __DEBUG__0416__
               cprintf("Attach tail: L%d\n",level+1);
+              #endif
               p->prev = mlfq.L[level+1].tail;
               mlfq.L[level+1].tail->next = p;
               mlfq.L[level+1].tail = p;
             } else{
+              #ifdef __DEBUG__0416__
               cprintf("Create head: L%d\n",level+1);
+              #endif
               mlfq.L[level+1].head = p;
               mlfq.L[level+1].tail = p;
             }
             p->q_number++;
-
+            #ifdef __DEBUG__0416__
             lookQueue();
+            #endif
             continue; //This process must be skipped. (It will be serviced in the next iteration.)
           }
 
@@ -930,9 +979,11 @@ void
 MLFQreset(void) {
   struct proc *p;
   struct proc *pn;
+  #ifdef __DEBUG__0416__
   cprintf("MLFQ reset!\n");
   procdump();
   lookQueue();
+  #endif
 
   acquire(&ptable.lock);
   //acquire(&mlfq.lock);
@@ -1010,10 +1061,11 @@ MLFQreset(void) {
 
   //release(&mlfq.lock);
   release(&ptable.lock);
-
+  #ifdef __DEBUG__0416__
   cprintf("after reset\n");
   procdump();
   lookQueue();
+  #endif
 }
 
 int getLevel() {
