@@ -1,4 +1,4 @@
-#pragma once
+
 
 //#define __DEBUG_0416__
 
@@ -197,7 +197,7 @@ void            clearpteu(pde_t *pgdir, char *uva);
 void lookQueue(void);
 void MLFQinit(void);
 void MLFQreset();
-int getLevel();
+int getLevel(void);
 void setPriority(int, int);
 void schedulerLock(int);
 void schedulerUnlockChecked();
@@ -205,3 +205,9 @@ void schedulerUnlock(int);
 
 //prac_syscall.c
 int             myfunction(char*);
+
+//mlfq_test.c
+int fork_children(void);
+int fork_children2(void);
+int fork_children3(void);
+void exit_children(void);

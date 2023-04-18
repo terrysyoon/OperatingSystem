@@ -25,6 +25,16 @@ int sleep(int);
 int uptime(void);
 int myfunction(char*); //Mar 21st 2023
 
+// new procs
+void lookQueue(void);
+void MLFQinit(void);
+void MLFQreset();
+int getLevel();
+void setPriority(int, int);
+void schedulerLock(int);
+void schedulerUnlockChecked();
+void schedulerUnlock(int);
+
 // ulib.c
 int stat(const char*, struct stat*);
 char* strcpy(char*, const char*);
