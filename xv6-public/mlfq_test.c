@@ -7,12 +7,12 @@
 #define NUM_SLEEP 1000
 
 #define NUM_THREAD 4
-#define MAX_LEVEL 5
+#define MAX_LEVEL 3
 
 int parent;
 
-extern int getLevel();
-extern void setPriority(int, int);
+//#int getLevel();
+//void setPriority(int, int);
 
 int fork_children()
 {
@@ -88,6 +88,7 @@ int main(int argc, char *argv[])
     for (i = 0; i < NUM_LOOP; i++)
     {
       int x = getLevel();
+      //int x= 1;
       if (x < 0 || x > 4)
       {
         printf(1, "Wrong level: %d\n", x);

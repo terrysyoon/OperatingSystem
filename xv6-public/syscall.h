@@ -24,7 +24,7 @@
 
 /*Syscalls for MLFQ*/
 #define SYS_yield 23
-#define SYS_getlevel 24
-#define SYS_setpriority 25
+#define SYS_getLevel 24
+#define SYS_setPriority 25
 #define SYS_lock 26
 #define SYS_unlock 27

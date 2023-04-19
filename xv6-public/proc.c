@@ -1198,7 +1198,7 @@ void schedulerUnlock(int password) {
 
 
 
-
+/*
 
 int sys_yield(void) {
     yield();
@@ -1231,4 +1231,4 @@ int sys_unlock(void) {
         return -1;
     schedulerUnlock(password);
     return 1;
-}
+}*/

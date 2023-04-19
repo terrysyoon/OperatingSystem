@@ -133,11 +133,10 @@ static int (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
-[SYS_myfunction] sys_myfunction, //Mar 21st 2023
-/*Syscalls for MLFQ*/
+[SYS_myfunction] sys_myfunction,
 [SYS_yield]   sys_yield,
-[SYS_getlevel] sys_getlevel,
-[SYS_setpriority] sys_setpriority,
+[SYS_getLevel] sys_getlevel,
+[SYS_setPriority] sys_setpriority,
 [SYS_lock]    sys_lock,
 [SYS_unlock]  sys_unlock,
 };

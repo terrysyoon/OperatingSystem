@@ -2,9 +2,9 @@
 #include "defs.h"
 #include "param.h"
 #include "mmu.h"
-#include "proc.h"
+//#include "proc.h"
 
-/* int sys_yield(void) {
+int sys_yield(void) {
     yield();
     return 1;
 }
@@ -35,4 +35,4 @@ int sys_unlock(void) {
         return -1;
     schedulerUnlock(password);
     return 1;
-} */
+} 

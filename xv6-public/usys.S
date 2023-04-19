@@ -32,7 +32,7 @@ SYSCALL(uptime)
 SYSCALL(myfunction) //Mar 21st 2023
 /*Syscalls for MLFQ*/
 SYSCALL(yield)
-SYSCALL(getlevel)
-SYSCALL(setpriority)
+SYSCALL(getLevel)
+SYSCALL(setPriority)
 SYSCALL(lock)
 SYSCALL(unlock)
