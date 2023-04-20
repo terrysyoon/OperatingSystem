@@ -103,5 +103,12 @@ int main(int argc, char *argv[])
   exit_children();
   printf(1, "[Test 1] finished\n");
   printf(1, "done\n");
+
+  printf(1, "Locking process: %d\n", parent);
+  __asm__("int $129");
+  printf(1, "Unlocking process: %d\n", parent);
+   __asm__("int $130");
+  printf(1, "done\n");
+   
   exit();
 }
