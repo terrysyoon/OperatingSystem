@@ -1103,6 +1103,8 @@ void schedulerLock(int password) {
   //if password is correct, lock the scheduler.
   //Also check if the scheduler is already locked.
 
+  mlfq_tick.global_tick = 0; //reset global tick counter
+
   if(password == SCHEDULER_LOCK_PASSWORD && !mlfq.isLocked) {
     //To-Dos:
     //reset global tick counter -> done, April 12nd 2023
