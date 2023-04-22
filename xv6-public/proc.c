@@ -23,9 +23,9 @@ int nextpid = 1;
 
 struct MLFQ{
   //struct spinlock lock;
-  struct queue L[NUM_QUEUES];
-  int isLocked;
-  struct proc* urgent_process;
+  struct queue L[NUM_QUEUES]; //L0~L1
+  int isLocked; //if the scheduler is locked. 0: unlocked, 1: locked
+  struct proc* urgent_process; // Dominating process
 };
 struct MLFQ_TICK mlfq_tick;
 struct MLFQ mlfq;
@@ -1021,6 +1021,8 @@ MLFQreset(void) {
       } else{
         p->priority = 3;
       }*/
+      
+      // reset priority fields, as required by the assignment
       p->q_number = 0;
       p->priority = 3;
       //p->q_ticks = 0;
@@ -1181,7 +1183,7 @@ void schedulerLock(int password) {
     mlfq_tick.global_tick = 0;
     release(&mlfq_tick.lock);
   }
-  else{ //error message
+  else{ ///error message and kill, as required by the assignment.
     cprintf("Password is incorrect or scheduler is already locked.\n");
         cprintf("pid = %d, time quantum = %u, current queue level = %d\n",
       p->pid, p->q[p->q_number], p->q_number);
@@ -1190,7 +1192,7 @@ void schedulerLock(int password) {
 }
 
 // Must be called only by schedulerUnlock() or MLFQreset()
-// ptable.lock and mlfq.lock must be held
+// ptable.lock must be held
 void schedulerUnlockChecked() {
     mlfq.isLocked = 0;
 
