@@ -124,10 +124,7 @@ allocproc(void)
 {
   struct proc *p;
   char *sp;
-  #ifdef __DEBUG_0416__
-  cprintf("alloc proc!\n");
-  procdump();
-  #endif
+
   acquire(&ptable.lock);
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
@@ -180,26 +177,13 @@ found:
   p->context->eip = (uint)forkret;
 
   acquire(&ptable.lock);
-  //acquire(&mlfq.lock);
-  #ifdef __DEBUG__
-  cprintf("allocproc\n");
-  #endif
+
   if(mlfq.L[0].head == 0) { //if L0 is empty
-  //#ifdef __DEBUG__
-    #ifdef __DEBUG__0416__
-    cprintf("L0 empty\n"); //debug
-    #endif
-    //#endif
     mlfq.L[0].head = p;
     mlfq.L[0].tail = p;
     p->prev = 0; //p is the first element of the doubly ll. Seems unneccesary but to be sure.
   }
   else{
-//    #ifdef __DEBUG__
-  #ifdef __DEBUG__0416__
-    cprintf("L0 not empty: %d\n", mlfq.L[0].head->pid); //debug
-      #endif
-//#endif
     //Create double link
     p->prev = mlfq.L[0].tail;
     mlfq.L[0].tail -> next = p;
@@ -207,10 +191,6 @@ found:
     //Update tail
     mlfq.L[0].tail = p;
   }
-  #ifdef __DEBUG__
-  cprintf("end\n");
-  #endif
-  //release(&mlfq.lock);
   release(&ptable.lock);
 
   return p;
@@ -223,9 +203,7 @@ userinit(void)
 {
   struct proc *p;
   extern char _binary_initcode_start[], _binary_initcode_size[];
-  #ifdef __DEBUG__
-  cprintf("user init begin\n");//debug
-  #endif
+
   p = allocproc();
   
   initproc = p;
@@ -254,10 +232,6 @@ userinit(void)
   p->state = RUNNABLE;
 
   release(&ptable.lock);
-  #ifdef __DEBUG__
-  cprintf("user init end\n");
-  #endif
-  //sleep(5);
 }
 
 // Grow current process's memory by n bytes.
@@ -295,11 +269,6 @@ fork(void)
   if((np = allocproc()) == 0){
     return -1;
   }
-#ifdef __FORK_DEBUG__
-
-  cprintf("before fork\n");
-  procdump();
-#endif
   // Copy process state from proc.
   if((np->pgdir = copyuvm(curproc->pgdir, curproc->sz)) == 0){
     kfree(np->kstack);
@@ -322,21 +291,11 @@ fork(void)
   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
 
   pid = np->pid;
-  #ifdef __DEBUG__0416__
-  cprintf("Forked: %d", pid);
-  #endif
 
   acquire(&ptable.lock);
 
   np->state = RUNNABLE;
-  #ifdef __DEBUG_0416__
-  cprintf("set runble\n");
-  #endif
   release(&ptable.lock);
-  #ifdef __FORK_DEBUG__
-  cprintf("after fork\n");
-  procdump();
-  #endif
 
   return pid;
 }
@@ -425,49 +384,19 @@ wait(void)
         p->killed = 0;
         p->state = UNUSED;
 
-        #ifdef __DEBUG__0416__
-        cprintf("delete dead from queue\n");
-        procdump();
-        #endif
-
         if(p == mlfq.L[p->q_number].head && p == mlfq.L[p->q_number].tail) {
-            #ifdef __DEBUG__0416__
-          cprintf("remove head&tail\n");
-          #endif
           mlfq.L[p->q_number].head = 0;
           mlfq.L[p->q_number].tail = 0;
         } else if(p == mlfq.L[p->q_number].head) {
-          #ifdef __DEBUG__0416__
-          cprintf("remove head\n");
-          cprintf("Head: %d\n",mlfq.L[p->q_number].head->pid);
-          
-          if(mlfq.L[p->q_number].tail) {
-            cprintf("Tail: %d\n", mlfq.L[p->q_number].tail->pid );
-          }
-          else {
-            cprintf("Tail: NULL");
-          }
-          #endif
           mlfq.L[p->q_number].head = p->next;
           if(mlfq.L[p->q_number].head->next) mlfq.L[p->q_number].head->next->prev = mlfq.L[p->q_number].head; //check for nullptr
         } else if(p == mlfq.L[p->q_number].tail) {
-          #ifdef __DEBUG__0416__
-          cprintf("remove tail\n");
-          #endif
           mlfq.L[p->q_number].tail = p->prev;
           if(mlfq.L[p->q_number].tail) mlfq.L[p->q_number].tail->next = 0;
         } else {
-          //struct proc* temp = p;
-          //temp->prev->next = temp->next;
-          #ifdef __DEBUG__0416__
-          cprintf("remove body\n");
-          #endif
           if(p->prev) p->prev->next = p->next;
           if(p->next) p->next->prev = p->prev;
         }
-        #ifdef __DEBUG__0416__
-        procdump();
-        #endif
         release(&ptable.lock);
         return pid;
       }
@@ -503,13 +432,7 @@ scheduler(void)
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
-  #ifdef __DEBUG__
-  cprintf("Scheduler begin!\n");
-  #endif
-  /*if(!(c->started)) {
-    panic("cpu not start!");
-  }*/
-  //procdump();
+
   struct proc* L2_cand = 0;
   int level = 0;
   for(;;){
@@ -526,20 +449,16 @@ scheduler(void)
       last_level = -1;
     }
     else{
-      #ifdef __DEBUG__
-      cprintf("Scheduler not locked\n");
-      #endif
       for(level = 0; level < NUM_QUEUES-1; level++) //L0~L1
       { 
         struct proc* L_cand = 0;
-        //cprintf("Level: %d\n", level);
+
         for(p = mlfq.L[level].head; p != 0; p = p->next) { // Search till the end of the linked list queue.
         
           if(p->state != RUNNABLE)
             continue;
 
           if(p->q_number != level) {
-              //cprintf("L%d q:%d", level, p->q_number);
               procdump();
               lookQueue();
               panic("Contaminated MLFQ queue.");
@@ -552,102 +471,36 @@ scheduler(void)
             //FIXME: The original queue must be concatenated. (if L0-> L1, concat L0) -> Implement doubly linked list.
           
           
-          /*
-            if(p == mlfq.L[level].head) {
-              mlfq.L[level].head = p->next;
-            }
-
-            if(p == mlfq.L[level].tail) { //if p is the tail of the queue, update tail
-              mlfq.L[level].tail = p->prev;
-              if(mlfq.L[level].tail) mlfq.L[level].tail->next = 0;
-            }
-            if(p->prev) { //if p is not the head, concat
-              p->prev->next = p->next;
-            } else{ //if p is the head, update head
-              mlfq.L[level].head = p->next;
-            }
-            */
-            #ifdef __DEBUG__0416__
-            cprintf("L%d P:%d: ",level, p->pid);
-            #endif
             if(p == mlfq.L[level].head && p == mlfq.L[level].tail) {
-              #ifdef __DEBUG__0416__
-              cprintf("remove head&tail\n");
-              #endif
               mlfq.L[level].head = 0;
               mlfq.L[level].tail = 0;
             } else if(p == mlfq.L[level].head) {
-              #ifdef __DEBUG__0416__
-              cprintf("remove head\n");
-              cprintf("Head: %d\n",mlfq.L[level].head->pid);
-              if(mlfq.L[level].tail) {
-                cprintf("Tail: %d\n", mlfq.L[level].tail->pid );
-              }
-              else {
-                cprintf("Tail: NULL");
-              }
-              #endif
               mlfq.L[level].head = p->next;
               if(mlfq.L[level].head->next) mlfq.L[level].head->next->prev = mlfq.L[level].head; //check for nullptr
             } else if(p == mlfq.L[level].tail) {
-              #ifdef __DEBUG__0416__
-              cprintf("remove tail\n");
-              #endif
               mlfq.L[level].tail = p->prev;
               if(mlfq.L[level].tail) mlfq.L[level].tail->next = 0;
             } else {
-              //struct proc* temp = p;
-              //temp->prev->next = temp->next;
-              #ifdef __DEBUG__0416__
-              cprintf("remove body\n");
-              #endif
               if(p->prev) {
-                #ifdef __DEBUG__0416__
-                cprintf("prev: %d\n",p->prev->pid);
-                #endif
                 p->prev->next = p->next;
               }
-              #ifdef __DEBUG__0416__
-              else {
-                
-                cprintf("prev null\n");
-              }
-              #endif
               if(p->next) {
-                #ifdef __DEBUG__0416__
-                cprintf("next: %d\n", p->next->pid);
-                #endif
                 p->next->prev = p->prev;
               }
-              #ifdef __DEBUG__0416__
-              else {
-                cprintf("next null\n");
-              }
-              lookQueue();
-              #endif
             }
 
             //p->prev = 0;
             p->next = 0; //When demoted, the process must attach to the tail.
 
             if(mlfq.L[level+1].head) { //if the lower level queue is not empty
-              #ifdef __DEBUG__0416__
-              cprintf("Attach tail: L%d\n",level+1);
-              #endif
               p->prev = mlfq.L[level+1].tail;
               mlfq.L[level+1].tail->next = p;
               mlfq.L[level+1].tail = p;
             } else{
-              #ifdef __DEBUG__0416__
-              cprintf("Create head: L%d\n",level+1);
-              #endif
               mlfq.L[level+1].head = p;
               mlfq.L[level+1].tail = p;
             }
             p->q_number++;
-            #ifdef __DEBUG__0416__
-            lookQueue();
-            #endif
             continue; //This process must be skipped. (It will be serviced in the next iteration.)
           }
 
@@ -704,22 +557,8 @@ scheduler(void)
       p = L2_cand;
     }
       
-      
-    #ifdef __DEBUG__
-    cprintf("End of Loop>");
-    #endif
-    //procdump();
     if(!p)
     {
-      /*
-      cprintf("!!L0: ");
-      if(mlfq.L[0].head) cprintf("%d",mlfq.L[0].head->pid);
-      cprintf("\n!!L1: ");
-      if(mlfq.L[1].head) cprintf("%d",mlfq.L[1].head->pid);
-      cprintf("\n!!L2: ");
-      if(mlfq.L[2].head) cprintf("%d",mlfq.L[2].head->pid);
-      cprintf("\n");
-      */
       release(&ptable.lock);
       //procdump();
       continue;
@@ -740,26 +579,17 @@ scheduler(void)
   // Switch to chosen process.  It is the process's job
   // to release ptable.lock and then reacquire it
   // before jumping back to us.
-  #ifdef __DEBUG__
-  cprintf("Start switching\n");
-  cprintf("ncli: %d\n", c->ncli);
-  #endif
-  //cprintf("%d\n", p->pid);
-  //procdump();
   c->proc = p;
   switchuvm(p);
   p->state = RUNNING;
 
   swtch(&(c->scheduler), p->context);
   switchkvm();
-  //#ifdef __DEBUG__
-  //cprintf("\n");
-  //#endif
+
   // Process is done running for now.
   // It should have changed its p->state before coming back.
   c->proc = 0;
 
-  //release(&mlfq.lock);
   release(&ptable.lock);
 
   }
@@ -798,13 +628,6 @@ sched(void)
 void
 yield(void) //must be altered for this project. no signature change required.
 {  
-  #ifdef __DEBUG__
-  cprintf("yield called\n");
-  #endif
-  
-  
-  //cprintf("yield: %d\n", myproc()->pid);
-  //cprintf("");
 
   //FIXME: nonpreemptive yield가 아니면 여기서 초기화 하면 안되는데
   struct proc *p;
@@ -979,49 +802,17 @@ void
 MLFQreset(void) {
   struct proc *p;
   struct proc *pn;
-  #ifdef __DEBUG__0416__
-  cprintf("MLFQ reset!\n");
-  procdump();
-  lookQueue();
-  #endif
 
   acquire(&ptable.lock);
-  //acquire(&mlfq.lock);
 
   if(mlfq.isLocked) schedulerUnlockChecked();
 
   int level;
   for(level = 0; level < NUM_QUEUES; level++) {
-    //cprintf("level: %d\n",level);
+
     for(p = mlfq.L[level].head; p != 0; p = pn) {
       pn = p->next;
-      //cprintf("pid: %d\n",p->pid);
 
-      //FIXME: is this condition necessary? Or should I make this condition more inclusive?
-      //if(p->state == RUNNABLE) { //is this condition necessary?
-      //if(p->state != ZOMBIE) {
-
-        /*
-      if(1) {
-        p->q_number = 0;
-        p->priority = 3;
-        //p->q_ticks = 0;
-        int i;
-        for(i = 0; i < NUM_QUEUES; i++) {
-          p->q[i] = 0;
-        }
-        // FIXME: More fields to come? idk
-
-
-        if(level != 0) { //if not in highest priority que, bring it to the queue.
-          mlfq.L[0].tail->next = p;
-          mlfq.L[0].tail = p;
-          p->next = 0; //make sure it's the last one in the queue.
-        }
-      } else{
-        p->priority = 3;
-      }*/
-      
       // reset priority fields, as required by the assignment
       p->q_number = 0;
       p->priority = 3;
@@ -1060,14 +851,6 @@ MLFQreset(void) {
     mlfq.L[level].head = 0;
     mlfq.L[level].tail = 0;
   }
-
-  //release(&mlfq.lock);
-  release(&ptable.lock);
-  #ifdef __DEBUG__0416__
-  cprintf("after reset\n");
-  procdump();
-  lookQueue();
-  #endif
 }
 
 int getLevel(void) {
@@ -1084,17 +867,14 @@ void setPriority(int pid, int priority) {
   }
 
   acquire(&ptable.lock);
-  //acquire(&mlfq.lock);
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
     if(p->pid == pid) {
       p->priority = priority;
-      //release(&mlfq.lock);
       release(&ptable.lock);
       return;
     }
   }
-  //release(&mlfq.lock);
   release(&ptable.lock); 
   cprintf("No process with pid %d found.\n", pid);
 }
@@ -1110,67 +890,27 @@ void schedulerLock(int password) {
   if(password == SCHEDULER_LOCK_PASSWORD && !mlfq.isLocked) {
     //To-Dos:
     //reset global tick counter -> done, April 12nd 2023
-    //acquire(&mlfq.lock);
     acquire(&ptable.lock);
     mlfq.isLocked = 1;
     mlfq.urgent_process = p;
 
     int level = p->q_number;
     if(p == mlfq.L[level].head && p == mlfq.L[level].tail) {
-      #ifdef __DEBUG__0416__
-      cprintf("remove head&tail\n");
-      #endif
       mlfq.L[level].head = 0;
       mlfq.L[level].tail = 0;
     } else if(p == mlfq.L[level].head) {
-      #ifdef __DEBUG__0416__
-      cprintf("remove head\n");
-      cprintf("Head: %d\n",mlfq.L[level].head->pid);
-      if(mlfq.L[level].tail) {
-        cprintf("Tail: %d\n", mlfq.L[level].tail->pid );
-      }
-      else {
-        cprintf("Tail: NULL");
-      }
-      #endif
       mlfq.L[level].head = p->next;
       if(mlfq.L[level].head->next) mlfq.L[level].head->next->prev = mlfq.L[level].head; //check for nullptr
     } else if(p == mlfq.L[level].tail) {
-      #ifdef __DEBUG__0416__
-      cprintf("remove tail\n");
-      #endif
       mlfq.L[level].tail = p->prev;
       if(mlfq.L[level].tail) mlfq.L[level].tail->next = 0;
     } else {
-      //struct proc* temp = p;
-      //temp->prev->next = temp->next;
-      #ifdef __DEBUG__0416__
-      cprintf("remove body\n");
-      #endif
       if(p->prev) {
-        #ifdef __DEBUG__0416__
-        cprintf("prev: %d\n",p->prev->pid);
-        #endif
         p->prev->next = p->next;
       }
-      #ifdef __DEBUG__0416__
-      else {
-        
-        cprintf("prev null\n");
-      }
-      #endif
       if(p->next) {
-        #ifdef __DEBUG__0416__
-        cprintf("next: %d\n", p->next->pid);
-        #endif
         p->next->prev = p->prev;
       }
-      #ifdef __DEBUG__0416__
-      else {
-        cprintf("next null\n");
-      }
-      lookQueue();
-      #endif
     }
 
     p->prev = 0;
@@ -1229,11 +969,9 @@ void schedulerUnlock(int password) {
 
   if(password == SCHEDULER_LOCK_PASSWORD && mlfq.isLocked && mlfq.urgent_process == p) {
     //To-Dos:
-    //reset global tick counter -> done, April 12nd 2023
+    //reset global tick counter -> done uncomment to use, April 12nd 2023
     acquire(&ptable.lock);
-    //acquire(&mlfq.lock);
     schedulerUnlockChecked();
-    //release(&mlfq.lock);
     release(&ptable.lock);
 
     //Uncomment this when you want to reset the global tick counter.
