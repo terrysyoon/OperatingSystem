@@ -851,6 +851,7 @@ MLFQreset(void) {
     mlfq.L[level].head = 0;
     mlfq.L[level].tail = 0;
   }
+  release(&ptable.lock);
 }
 
 int getLevel(void) {
