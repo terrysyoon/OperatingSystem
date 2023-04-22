@@ -10,6 +10,7 @@
 int
 exec(char *path, char **argv)
 {
+  //cprintf("exec1!\n");
   char *s, *last;
   int i, off;
   uint argc, sz, sp, ustack[3+MAXARG+1];
@@ -18,6 +19,8 @@ exec(char *path, char **argv)
   struct proghdr ph;
   pde_t *pgdir, *oldpgdir;
   struct proc *curproc = myproc();
+
+  //cprintf("exec2!\n");
 
   begin_op();
 

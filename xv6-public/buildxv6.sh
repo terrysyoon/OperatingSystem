@@ -1,2 +1,2 @@
-make
-make fs.img
+make -j
+make -j fs.img

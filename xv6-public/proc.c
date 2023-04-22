@@ -1,3 +1,5 @@
+//#define __DEBUG__
+
 #include "types.h"
 #include "defs.h"
 #include "param.h"
@@ -5,8 +7,11 @@
 #include "mmu.h"
 #include "x86.h"
 #include "proc.h"
-#include "spinlock.h"
+#ifndef __PROC_NEW_H__
+  #include "spinlock.h"
+#endif
 
+//#define __FORK_DEBUG__
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -15,6 +20,16 @@ struct {
 static struct proc *initproc;
 
 int nextpid = 1;
+
+struct MLFQ{
+  //struct spinlock lock;
+  struct queue L[NUM_QUEUES]; //L0~L1
+  int isLocked; //if the scheduler is locked. 0: unlocked, 1: locked
+  struct proc* urgent_process; // Dominating process
+};
+struct MLFQ_TICK mlfq_tick;
+struct MLFQ mlfq;
+
 extern void forkret(void);
 extern void trapret(void);
 
@@ -24,6 +39,26 @@ void
 pinit(void)
 {
   initlock(&ptable.lock, "ptable");
+}
+
+void 
+MLFQinit(void) {
+  int i;
+  //initlock(&mlfq.lock, "mlfq");
+  initlock(&mlfq_tick.lock, "mlfq_tick");
+  for(i = 0; i < NUM_QUEUES; i++) {
+    mlfq.L[i].level = i;
+    mlfq.L[i].size = 0;
+    mlfq.L[i].max_size = __INT32_MAX__;
+    mlfq.L[i].quantom = 2*i + 4;
+
+    mlfq.L[i].head = 0; //nullptr
+    mlfq.L[i].tail = 0;
+  }
+  mlfq.isLocked = 0;
+  mlfq.urgent_process = 0; //nullptr
+
+  mlfq_tick.global_tick = 0;
 }
 
 // Must be called with interrupts disabled
@@ -65,6 +100,20 @@ myproc(void) {
   return p;
 }
 
+void
+lookQueue(void) {
+  int i;
+  struct proc* p;
+  for(i = 0; i < NUM_QUEUES; i++) {
+    cprintf("L%d: H%d T%d | ",i,(mlfq.L[i].head)?mlfq.L[i].head->pid:0, (mlfq.L[i].tail)?mlfq.L[i].tail->pid:0);
+    for(p = mlfq.L[i].head; p != 0; p=p->next) {
+      cprintf("%d ", p->pid);
+    }
+    cprintf("\n");
+  }
+}
+
+
 //PAGEBREAK: 32
 // Look in the process table for an UNUSED proc.
 // If found, change state to EMBRYO and initialize
@@ -89,6 +138,21 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
 
+  p->q_number = 0;
+  p->priority = 3;
+  p->q_ticks = 0;
+  p->n_run = 0;
+  p->ctime = ticks;
+  p->etime = 0;
+  p->rtime = 0;
+  //p->iotime = 0;
+  p->q_ticks_total = 0;
+  p->next = 0; //nullptr
+  p->prev = 0; //nullptr
+  for(int i = 0; i < NUM_QUEUES; i++){
+    p->q[i] = 0;
+  }
+
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -111,6 +175,23 @@ found:
   p->context = (struct context*)sp;
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
+
+  acquire(&ptable.lock);
+
+  if(mlfq.L[0].head == 0) { //if L0 is empty
+    mlfq.L[0].head = p;
+    mlfq.L[0].tail = p;
+    p->prev = 0; //p is the first element of the doubly ll. Seems unneccesary but to be sure.
+  }
+  else{
+    //Create double link
+    p->prev = mlfq.L[0].tail;
+    mlfq.L[0].tail -> next = p;
+
+    //Update tail
+    mlfq.L[0].tail = p;
+  }
+  release(&ptable.lock);
 
   return p;
 }
@@ -191,7 +272,6 @@ fork(void)
   if((np = allocproc()) == 0){
     return -1;
   }
-
   // Copy process state from proc.
   if((np->pgdir = copyuvm(curproc->pgdir, curproc->sz)) == 0){
     kfree(np->kstack);
@@ -218,7 +298,6 @@ fork(void)
   acquire(&ptable.lock);
 
   np->state = RUNNABLE;
-
   release(&ptable.lock);
 
   return pid;
@@ -264,6 +343,15 @@ exit(void)
     }
   }
 
+/* 할당 해제 시 큐에서 지우도록
+  //Remove from MLFQ queue
+  if(curproc->prev) { //if this process is not head
+    curproc->prev->next = curproc->next;
+  }
+  else { //if this process is head
+    mlfq.L[curproc->q_number].head = curproc->next;
+  }
+*/
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
   sched();
@@ -298,6 +386,20 @@ wait(void)
         p->name[0] = 0;
         p->killed = 0;
         p->state = UNUSED;
+
+        if(p == mlfq.L[p->q_number].head && p == mlfq.L[p->q_number].tail) {
+          mlfq.L[p->q_number].head = 0;
+          mlfq.L[p->q_number].tail = 0;
+        } else if(p == mlfq.L[p->q_number].head) {
+          mlfq.L[p->q_number].head = p->next;
+          if(mlfq.L[p->q_number].head->next) mlfq.L[p->q_number].head->next->prev = mlfq.L[p->q_number].head; //check for nullptr
+        } else if(p == mlfq.L[p->q_number].tail) {
+          mlfq.L[p->q_number].tail = p->prev;
+          if(mlfq.L[p->q_number].tail) mlfq.L[p->q_number].tail->next = 0;
+        } else {
+          if(p->prev) p->prev->next = p->next;
+          if(p->next) p->next->prev = p->prev;
+        }
         release(&ptable.lock);
         return pid;
       }
@@ -325,39 +427,176 @@ wait(void)
 void
 scheduler(void)
 {
+
+  int last_serv = 0;
+  int last_level = -1;
+  int pass_lastserv = 0;
+
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
-  
+
+  struct proc* L2_cand = 0;
+  int level = 0;
   for(;;){
     // Enable interrupts on this processor.
     sti();
-
+    //procdump();
+    L2_cand = 0;
+    pass_lastserv = 0;
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
-
-
-      cprintf("switch ncli: %d\n", c->ncli);
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
-
-      swtch(&(c->scheduler), p->context);
-      switchkvm();
-
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      c->proc = 0;
+    if(mlfq.isLocked) {
+      p = mlfq.urgent_process;
+      last_serv = 0;
+      last_level = -1;
     }
-    release(&ptable.lock);
+    else{
+      for(level = 0; level < NUM_QUEUES-1; level++) //L0~L1
+      { 
+        struct proc* L_cand = 0;
+
+        for(p = mlfq.L[level].head; p != 0; p = p->next) { // Search till the end of the linked list queue.
+        
+          if(p->state != RUNNABLE)
+            continue;
+
+          if(p->q_number != level) {
+              procdump();
+              lookQueue();
+              panic("Contaminated MLFQ queue.");
+          }
+
+          if(p->q[level] >= mlfq.L[level].quantom) { //If this process spent all quantoms available from the queue it belongs.
+
+            p->q[level] = 0; //Once the priority/queue modification occured, reset the quantom count of this process for L[level]
+            //L0~L1: This process must be sent to the lower level queue.
+            //FIXME: The original queue must be concatenated. (if L0-> L1, concat L0) -> Implement doubly linked list.
+          
+          
+            if(p == mlfq.L[level].head && p == mlfq.L[level].tail) {
+              mlfq.L[level].head = 0;
+              mlfq.L[level].tail = 0;
+            } else if(p == mlfq.L[level].head) {
+              mlfq.L[level].head = p->next;
+              if(mlfq.L[level].head->next) mlfq.L[level].head->next->prev = mlfq.L[level].head; //check for nullptr
+            } else if(p == mlfq.L[level].tail) {
+              mlfq.L[level].tail = p->prev;
+              if(mlfq.L[level].tail) mlfq.L[level].tail->next = 0;
+            } else {
+              if(p->prev) {
+                p->prev->next = p->next;
+              }
+              if(p->next) {
+                p->next->prev = p->prev;
+              }
+            }
+
+            //p->prev = 0;
+            p->next = 0; //When demoted, the process must attach to the tail.
+
+            if(mlfq.L[level+1].head) { //if the lower level queue is not empty
+              p->prev = mlfq.L[level+1].tail;
+              mlfq.L[level+1].tail->next = p;
+              mlfq.L[level+1].tail = p;
+            } else{
+              mlfq.L[level+1].head = p;
+              mlfq.L[level+1].tail = p;
+            }
+            p->q_number++;
+            continue; //This process must be skipped. (It will be serviced in the next iteration.)
+          }
+
+          L_cand = p;
+          
+          if(last_level != level || pass_lastserv) 
+          {
+            break;
+          }
+
+          if(p->pid == last_serv) 
+          {
+            pass_lastserv = 1;
+          }
+        }
+        if(L_cand)
+        {
+          //cprintf("Found L%d cand\n",level);
+          if(!p) p = L_cand;
+          break;
+        }
+    }
+
+    if(!p){ //L0~L1 못 찾음
+      L2_cand = 0;
+      for(; level < NUM_QUEUES; level++) 
+      { //L2
+          //cprintf("Level: %d\n", level);
+          for(p = mlfq.L[level].head; p != 0; p = p->next) { // Search till the end of the linked list queue.
+
+            if(p->pid == last_serv) 
+            {
+              pass_lastserv = 1;
+            }
+
+            if(p->state != RUNNABLE)
+              continue;
+
+            if(p->q[level] >= mlfq.L[level].quantom) { //If this process spent all quantoms available from the queue it belongs.
+
+              p->q[level] = 0; //Once the priority/queue modification occured, reset the quantom count of this process for L[level]
+
+              //L2: This process must be promoted
+              if(p->priority > 0) {
+                p->priority--;
+              }
+            }
+
+            if(!L2_cand || L2_cand->priority > p->priority) {
+              L2_cand = p;
+            }
+        }
+      }
+      p = L2_cand;
+    }
+      
+    if(!p)
+    {
+      release(&ptable.lock);
+      //procdump();
+      continue;
+      panic("No runnable proc!");
+    }
+     
+    p->q[p->q_number]++; //increase consumed time quamtom
+      
+    last_serv = p->pid;
+    last_level = level;
+  }
+
+
+
+  p->q_ticks_total++;
+
+
+  // Switch to chosen process.  It is the process's job
+  // to release ptable.lock and then reacquire it
+  // before jumping back to us.
+  c->proc = p;
+  switchuvm(p);
+  p->state = RUNNING;
+
+  swtch(&(c->scheduler), p->context);
+  switchkvm();
+
+  // Process is done running for now.
+  // It should have changed its p->state before coming back.
+  c->proc = 0;
+
+  release(&ptable.lock);
 
   }
+  panic("Scheduler terminated!");
 }
 
 // Enter scheduler.  Must hold only ptable.lock
@@ -375,8 +614,10 @@ sched(void)
 
   if(!holding(&ptable.lock))
     panic("sched ptable.lock");
-  if(mycpu()->ncli != 1)
+  if(mycpu()->ncli != 1){
+    cprintf("ncli: %d\n", mycpu()->ncli);
     panic("sched locks");
+  }
   if(p->state == RUNNING)
     panic("sched running");
   if(readeflags()&FL_IF)
@@ -388,11 +629,18 @@ sched(void)
 
 // Give up the CPU for one scheduling round.
 void
-yield(void)
-{
+yield(void) //must be altered for this project. no signature change required.
+{  
+
+  //FIXME: nonpreemptive yield가 아니면 여기서 초기화 하면 안되는데
+  struct proc *p;
   acquire(&ptable.lock);  //DOC: yieldlock
-  myproc()->state = RUNNABLE;
+  //acquire(&mlfq.lock);
+  p = myproc();
+  p->state = RUNNABLE;
+  //p->q[q_number] = 0;
   sched();
+  //release(&mlfq.lock);
   release(&ptable.lock);
 }
 
@@ -444,6 +692,8 @@ sleep(void *chan, struct spinlock *lk)
   p->chan = chan;
   p->state = SLEEPING;
 
+  p->q[p->q_number] = 0;
+
   sched();
 
   // Tidy up.
@@ -465,8 +715,14 @@ wakeup1(void *chan)
   struct proc *p;
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-    if(p->state == SLEEPING && p->chan == chan)
+    if(p->state == SLEEPING && p->chan == chan){
       p->state = RUNNABLE;
+      int i = 0;
+      for(i = 0; i < NUM_QUEUES; i++) {
+        p->q[i] = 0;
+      }
+    }
+ 
 }
 
 // Wake up all processes sleeping on chan.
@@ -491,8 +747,13 @@ kill(int pid)
     if(p->pid == pid){
       p->killed = 1;
       // Wake process from sleep if necessary.
-      if(p->state == SLEEPING)
+      if(p->state == SLEEPING) { 
+        int i;
         p->state = RUNNABLE;
+        for(i = 0; i < NUM_QUEUES; i++) {
+        p->q[i] = 0;
+        }
+      }
       release(&ptable.lock);
       return 0;
     }
@@ -534,6 +795,207 @@ procdump(void)
       for(i=0; i<10 && pc[i] != 0; i++)
         cprintf(" %p", pc[i]);
     }
+    cprintf(" L%d %d", p->q_number, p->q[p->q_number]);
     cprintf("\n");
+  }
+}
+
+// Includes scheduler unlock
+void 
+MLFQreset(void) {
+  struct proc *p;
+  struct proc *pn;
+
+  acquire(&ptable.lock);
+
+  if(mlfq.isLocked) schedulerUnlockChecked();
+
+  int level;
+  for(level = 0; level < NUM_QUEUES; level++) {
+
+    for(p = mlfq.L[level].head; p != 0; p = pn) {
+      pn = p->next;
+
+      // reset priority fields, as required by the assignment
+      p->q_number = 0;
+      p->priority = 3;
+      //p->q_ticks = 0;
+      int i;
+      for(i = 0; i < NUM_QUEUES; i++) {
+        p->q[i] = 0;
+      }
+
+      if(level == 0) continue; //moving queue is not required if this process already belongs to L0
+
+      p->prev = 0;
+      p->next = 0;
+
+      if(!mlfq.L[0].head) //if L0 is empty, make this process the head. 
+      {
+        mlfq.L[0].head = p;
+        mlfq.L[0].tail = p;
+      } 
+      else
+      {
+        p->prev = mlfq.L[0].tail;
+        if(mlfq.L[0].tail) mlfq.L[0].tail->next = p;
+        else{
+          procdump();
+          lookQueue();
+          panic("cannot find tail of L0");
+        }
+        mlfq.L[0].tail = p;
+        mlfq.L[0].tail->next = 0; //remove possible cycle.
+      }
+    }
+  }
+  
+  for(level = 1; level < NUM_QUEUES; level++) {
+    mlfq.L[level].head = 0;
+    mlfq.L[level].tail = 0;
+  }
+  release(&ptable.lock);
+}
+
+int getLevel(void) {
+  struct proc *p = myproc();
+  return p->q_number;
+}
+
+void setPriority(int pid, int priority) {
+  struct proc *p;
+
+  if(priority < 0 || priority > 3) {
+    cprintf("Priority must be between 0 and 3.\n");
+    return;
+  }
+
+  acquire(&ptable.lock);
+
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if(p->pid == pid) {
+      p->priority = priority;
+      release(&ptable.lock);
+      return;
+    }
+  }
+  release(&ptable.lock); 
+  cprintf("No process with pid %d found.\n", pid);
+}
+
+void schedulerLock(int password) {
+  struct proc* p = myproc();
+
+  //if password is correct, lock the scheduler.
+  //Also check if the scheduler is already locked.
+
+  mlfq_tick.global_tick = 0; //reset global tick counter
+
+  if(password == SCHEDULER_LOCK_PASSWORD && !mlfq.isLocked) {
+    //To-Dos:
+    //reset global tick counter -> done, April 12nd 2023
+    acquire(&ptable.lock);
+    mlfq.isLocked = 1;
+    mlfq.urgent_process = p;
+
+    int level = p->q_number;
+    if(p == mlfq.L[level].head && p == mlfq.L[level].tail) {
+      mlfq.L[level].head = 0;
+      mlfq.L[level].tail = 0;
+    } else if(p == mlfq.L[level].head) {
+      mlfq.L[level].head = p->next;
+      if(mlfq.L[level].head->next) mlfq.L[level].head->next->prev = mlfq.L[level].head; //check for nullptr
+    } else if(p == mlfq.L[level].tail) {
+      mlfq.L[level].tail = p->prev;
+      if(mlfq.L[level].tail) mlfq.L[level].tail->next = 0;
+    } else {
+      if(p->prev) {
+        p->prev->next = p->next;
+      }
+      if(p->next) {
+        p->next->prev = p->prev;
+      }
+    }
+
+    p->prev = 0;
+    p->next = 0; //When demoted, the process must attach to the tail.
+
+
+    //release(&mlfq.lock);
+    release(&ptable.lock);
+    acquire(&mlfq_tick.lock);
+    mlfq_tick.global_tick = 0;
+    release(&mlfq_tick.lock);
+  }
+  else{ ///error message and kill, as required by the assignment.
+    cprintf("Password is incorrect or scheduler is already locked.\n");
+        cprintf("pid = %d, time quantum = %u, current queue level = %d\n",
+      p->pid, p->q[p->q_number], p->q_number);
+    exit();
+  }
+}
+
+// Must be called only by schedulerUnlock() or MLFQreset()
+// ptable.lock must be held
+void schedulerUnlockChecked() {
+    mlfq.isLocked = 0;
+
+    //reset priority and queue number, as DOS does.
+    mlfq.urgent_process->priority = 3;
+    int i = 0;
+    for(i = 0; i < NUM_QUEUES; i++) {
+      mlfq.urgent_process->q[i] = 0;
+    }
+    //mlfq.urgent_process->q_ticks = 0;
+    //urgent process to the head of L0
+    mlfq.urgent_process->q_number = 0;
+    //if L0 is not empty, then urgent process is the head of L0.
+    if(mlfq.L[0].head) {
+      mlfq.urgent_process->prev = 0;
+      mlfq.urgent_process->next = mlfq.L[0].head;
+      mlfq.L[0].head->prev = mlfq.urgent_process;
+      mlfq.L[0].head = mlfq.urgent_process;
+    }
+    else { //Create an empty queue. I highly doubt this will ever happen.
+      mlfq.L[0].head = mlfq.urgent_process;
+      mlfq.L[0].tail = mlfq.urgent_process;
+      mlfq.urgent_process->prev = 0;
+      mlfq.urgent_process->next = 0;
+    }
+    mlfq.urgent_process = 0; //nullptr
+}
+
+void schedulerUnlock(int password) {
+  struct proc* p = myproc();
+
+  //if password is correct, unlock the scheduler.
+  //Also check if the scheduler is already unlocked.
+
+  if(password == SCHEDULER_LOCK_PASSWORD && mlfq.isLocked && mlfq.urgent_process == p) {
+    //To-Dos:
+    //reset global tick counter -> done uncomment to use, April 12nd 2023
+    acquire(&ptable.lock);
+    schedulerUnlockChecked();
+    release(&ptable.lock);
+
+    //Uncomment this when you want to reset the global tick counter.
+/*     acquire(&mlfq_tick.lock);
+    mlfq_tick.global_tick = 0;
+    release(&mlfq_tick.lock); */
+  }
+  else{ //error message
+    if(password != SCHEDULER_LOCK_PASSWORD) {
+      cprintf("Password is incorrect.\n");
+    }
+    if(!mlfq.isLocked) {
+      cprintf("Scheduler is already unlocked.\n");
+    }
+    else if(p != mlfq.urgent_process) {
+      cprintf("Only the urgent process can unlock the scheduler. (%d trying to unlock scheduler for %d) \n", p->pid, mlfq.urgent_process->pid);
+
+    }
+    cprintf("pid = %d, time quantum = %u, current queue level = %d\n",
+      p->pid, p->q[p->q_number], p->q_number);
+    exit();
   }
 }

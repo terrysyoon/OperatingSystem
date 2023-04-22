@@ -1,3 +1,7 @@
+
+
+//#define __DEBUG_0416__
+
 struct buf;
 struct context;
 struct file;
@@ -189,5 +193,21 @@ void            clearpteu(pde_t *pgdir, char *uva);
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
 
+//proc_new.c
+void lookQueue(void);
+void MLFQinit(void);
+void MLFQreset();
+int getLevel(void);
+void setPriority(int, int);
+void schedulerLock(int);
+void schedulerUnlockChecked();
+void schedulerUnlock(int);
+
 //prac_syscall.c
 int             myfunction(char*);
+
+//mlfq_test.c
+int fork_children(void);
+int fork_children2(void);
+int fork_children3(void);
+void exit_children(void);

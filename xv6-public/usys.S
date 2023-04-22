@@ -30,3 +30,9 @@ SYSCALL(sbrk)
 SYSCALL(sleep)
 SYSCALL(uptime)
 SYSCALL(myfunction) //Mar 21st 2023
+/*Syscalls for MLFQ*/
+SYSCALL(yield)
+SYSCALL(getLevel)
+SYSCALL(setPriority)
+SYSCALL(lock)
+SYSCALL(unlock)
