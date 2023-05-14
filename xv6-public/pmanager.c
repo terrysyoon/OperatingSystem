@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
         gets(buf, nbuf);
         if(buf[0] == 0) continue; //EOF
         printf(1, "%s", buf);
-        if(strcmp(buf, "exit") == 0 || strcmp(buf, "exit\n")) {
+        if(strcmp(buf, "exit") == 0 || strcmp(buf, "exit\n") == 0) {
             break;
         }
     }
