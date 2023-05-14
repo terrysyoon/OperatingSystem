@@ -564,7 +564,7 @@ pmanager_list(void) {
   struct proc* p;
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    printf(1, "%s %d %u %u %u\n", p->name, p->pid, PGROUNDUP(p->stackSize), p->sz, p->memorylimit);
+    cprintf("%s %d %u %u %u\n", p->name, p->pid, PGROUNDUP(p->stackSize), p->sz, p->memorylimit);
   }
   release(&ptable.lock);
 }
