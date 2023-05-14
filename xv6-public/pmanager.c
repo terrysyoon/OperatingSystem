@@ -58,8 +58,8 @@ int main(int argc, char *argv[])
         memset(buf, 0, nbuf);
         gets(buf, nbuf);
         if(buf[0] == 0) continue; //EOF
-        printf(1, "%s \n", buf);
-        if(strcmp(buf, "exit") == 0) {
+        printf(1, "%s", buf);
+        if(strcmp(buf, "exit") == 0 || strcmp(buf, "exit\n")) {
             break;
         }
     }
