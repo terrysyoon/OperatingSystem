@@ -87,7 +87,31 @@ int main(int argc, char *argv[])
                 printf(1, "Failed! No process with PID:%d found.\n", pid);
             }
         }
-        //To-do: implement execute here
+        else if(strncmp(buf, "execute", strlen("execute"))) {
+            int i,j;
+            char path_buf[MAX_INPUT_STRING];
+            if(buf[strlen("execute")] != ' ') { //kill 뒤에 공백이 아니면
+                printf(1, "Usage: execute <path> <limit>\n");
+                continue;
+            }
+            for(i = 0, j = strlen("memlim") + 1; j < MAX_INPUT_STRING && buf[j] >= '0' && buf[j] <= '9'; i++, j++) {
+                path_buf[i] = buf[j];
+            }
+            path_buf[++i] = 0;
+            if(buf[j] != ' ') { //kill 뒤에 공백이 아니면
+                printf(1, "Usage: execute <path> <limit>\n");
+                continue;
+            }
+            char limit_buf[MAX_INPUT_STRING];
+            for(i = 0, j++; j < MAX_INPUT_STRING && buf[j] >= '0' && buf[j] <= '9'; i++, j++) {
+                limit_buf[i] = buf[j];
+            }
+            limit_buf[++i] = 0;
+            int limit = atoi(limit_buf);
+
+            printf(1, "Execute>> Path: %s Limit: %d\n", path_buf, limit);
+            //fork~exec2
+        }
         else if(strncmp(buf, "memlim", strlen("memlim")) == 0) { //prefix = memlim
             if(buf[strlen("memlim")] != ' ') { //kill 뒤에 공백이 아니면
                 printf(1, "Usage: memlim <pid> <limit>\n");
