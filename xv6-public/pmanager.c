@@ -87,8 +87,32 @@ int main(int argc, char *argv[])
                 printf(1, "Failed! No process with PID:%d found.\n", pid);
             }
         }
+        //To-do: implement execute here
         else if(strncmp(buf, "memlim", strlen("memlim")) == 0) { //prefix = memlim
-
+            if(buf[strlen("memlim")] != ' ') { //kill 뒤에 공백이 아니면
+                printf(1, "Usage: memlim <pid> <limit>\n");
+                continue;
+            }
+            int i,j;
+            char pid_buf[MAX_INPUT_STRING];
+            for(i = 0, j = strlen("kill") + 1; j < MAX_INPUT_STRING && buf[j] >= '0' && buf[j] <= '9'; i++, j++) {
+                pid_buf[i] = buf[j];
+            }
+            pid_buf[++i] = 0;
+            int pid = atoi(pid_buf);
+            char limit_buf[MAX_INPUT_STRING];
+            for(i = 0; j < MAX_INPUT_STRING && buf[j] >= '0' && buf[j] <= '9'; i++, j++) {
+                limit_buf[i] = buf[j];
+            }
+            limit_buf[++i] = 0;
+            uint limit = atoi(limit_buf);
+            printf(1, "Set memory limit>> PID: %d Limit: %d\n", pid, limit);
+            if(!setmemorylimit(pid,limit)) {
+                printf(1, "Success!\n");
+            }
+            else {
+                printf(1, "Fail!\n");
+            }
         }
         else if(strcmp(buf, "exit\n") == 0 || strcmp(buf, "exit") == 0) { // 개행 문자까지 들어와서, 전자에서 조건 충족.
             break;
