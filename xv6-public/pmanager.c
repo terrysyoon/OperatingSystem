@@ -43,6 +43,8 @@ exit
 • 각 명령은 해당 명령의 형식을 항상 따릅니다.
 • 명세에 주어지지 않은 명령은 실행되지 않습니다.
 */
+#include "types.h"
+#include "user.h"
 
 #define MAX_INPUT_STRING (400)
 
