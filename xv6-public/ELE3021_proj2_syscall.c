@@ -12,6 +12,6 @@ int sys_setmemorylimit(void) {
 }
 
 int sys_pmanagerList(void) {
-    pmanager_list();
+    pmanagerList();
     return 1;
 }
