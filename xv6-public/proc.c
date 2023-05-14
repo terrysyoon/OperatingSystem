@@ -560,7 +560,7 @@ setmemorylimit(int pid, int limit) {
 }
 
 void
-pmanager_list(void) {
+pmanagerList(void) {
   struct proc* p;
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){

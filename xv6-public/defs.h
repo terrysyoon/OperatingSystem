@@ -192,4 +192,4 @@ void            clearpteu(pde_t *pgdir, char *uva);
 //ELE3021 Project#2
 int exec2(char *path, char **argv, int stacksize);
 int setmemorylimit(int pid, int limit); //in proc.c
-void pmanager_list(void); //in proc.c
+void pmanagerList(void); //in proc.c

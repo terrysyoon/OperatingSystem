@@ -105,7 +105,7 @@ extern int sys_write(void);
 extern int sys_uptime(void);
 /*ELE3021 Project#2 Syscalls*/
 extern int sys_setmemorylimit(void);
-extern int sys_pmanager_list(void);
+extern int sys_pmanagerList(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -131,7 +131,7 @@ static int (*syscalls[])(void) = {
 [SYS_close]   sys_close,
 
 [SYS_setmemorylimit] sys_setmemorylimit,
-[SYS_pmanager_list] sys_pmanager_list,
+[SYS_pmanagerList] sys_pmanagerList,
 };
 
 void
