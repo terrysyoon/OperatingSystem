@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
             limit_buf[++i] = 0;
             uint limit = atoi(limit_buf);
             printf(1, "Set memory limit>> PID: %d Limit: %d\n", pid, limit);
-            if(!setmemorylimit(pid,limit)) {
+            if(setmemorylimit(pid,limit) == 0) {
                 printf(1, "Success!\n");
             }
             else {
