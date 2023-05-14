@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
             break;
         } 
         else {
-            printf(1, "Failed to parse the command!");
+            printf(1, "Failed to parse the command!\n");
         }
     }
     exit();

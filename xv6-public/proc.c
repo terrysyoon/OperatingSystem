@@ -561,10 +561,36 @@ setmemorylimit(int pid, int limit) {
 
 void
 pmanagerList(void) {
-  struct proc* p;
-  acquire(&ptable.lock);
+  static char *states[] = {
+  [UNUSED]    "unused",
+  [EMBRYO]    "embryo",
+  [SLEEPING]  "sleep ",
+  [RUNNABLE]  "runble",
+  [RUNNING]   "run   ",
+  [ZOMBIE]    "zombie"
+  };
+  int i;
+  struct proc *p;
+  char *state;
+  uint pc[10];
+
+  //acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    cprintf("%s %d %u %u %u\n", p->name, p->pid, PGROUNDUP(p->stackSize), p->sz, p->memorylimit);
+    if(p->state == UNUSED)
+      continue;
+
+    if(p->state >= 0 && p->state < NELEM(states) && states[p->state])
+      state = states[p->state];
+    else
+      state = "???";
+    cprintf("%s %d %s %u %u %u\n", p->name, p->pid, state, (PGROUNDUP(p->stackSize)), p->sz, p->memorylimit);
+  
+    if(p->state == SLEEPING){
+      getcallerpcs((uint*)p->context->ebp+2, pc);
+      for(i=0; i<10 && pc[i] != 0; i++)
+        cprintf(" %p", pc[i]);
+    }
+    cprintf("\n");
   }
-  release(&ptable.lock);
+  //release(&ptable.lock);
 }
