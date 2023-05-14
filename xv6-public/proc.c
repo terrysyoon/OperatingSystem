@@ -586,12 +586,12 @@ pmanagerList(void) {
     
     uint pages = (PGROUNDUP(p->stackSize));
     cprintf("%s %d %s %d %d %d\n", p->name, p->pid, state, pages, p->sz, p->memorylimit);
-  
+  /*
     if(p->state == SLEEPING){
       getcallerpcs((uint*)p->context->ebp+2, pc);
       for(i=0; i<10 && pc[i] != 0; i++)
         cprintf(" %p", pc[i]);
-    }
+    }*/
     cprintf("\n");
   }
   //release(&ptable.lock);
