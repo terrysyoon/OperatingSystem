@@ -29,3 +29,5 @@ SYSCALL(getpid)
 SYSCALL(sbrk)
 SYSCALL(sleep)
 SYSCALL(uptime)
+/*ELE3021 Project#2 Syscalls*/
+SYSCALL(setmemorylimit)

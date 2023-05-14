@@ -20,3 +20,6 @@
 #define SYS_link   19
 #define SYS_mkdir  20
 #define SYS_close  21
+
+/*ELE3021 Project#2 Syscalls*/
+#define SYS_setmemorylimit 22
