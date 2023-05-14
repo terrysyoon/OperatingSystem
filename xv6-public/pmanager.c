@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
             pid_buf[++i] = 0;
             int pid = atoi(pid_buf);
             char limit_buf[MAX_INPUT_STRING];
-            for(i = 0; j < MAX_INPUT_STRING && buf[j] >= '0' && buf[j] <= '9'; i++, j++) {
+            for(i = 0, j++; j < MAX_INPUT_STRING && buf[j] >= '0' && buf[j] <= '9'; i++, j++) {
                 limit_buf[i] = buf[j];
             }
             limit_buf[++i] = 0;
