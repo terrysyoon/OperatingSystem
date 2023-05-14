@@ -10,3 +10,8 @@ int sys_setmemorylimit(void) {
     setmemorylimit(pid, limit);
     return 1;
 }
+
+int sys_pmanager_list(void) {
+    pmanager_list();
+    return 1;
+}

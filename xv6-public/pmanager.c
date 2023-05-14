@@ -59,8 +59,23 @@ int main(int argc, char *argv[])
         gets(buf, nbuf);
         if(buf[0] == 0) continue; //EOF
         printf(1, "%s", buf);
-        if(strcmp(buf, "exit") == 0 || strcmp(buf, "exit\n") == 0) {
+        if(strcmp(buf, "list\n") == 0 || strcmp(buf, "list") == 0) {
+            //list
+            printf(1, "Name PID NumberOfStackPages Size Limit\n");
+            pmanager_list();
+            printf(1, "End of List\n");
+        }
+        else if(strncmp(buf, "kill", strlen("kill")) == 0) { //prefix = kill 
+            //kill
+        }
+        else if(strncmp(buf, "memlim", strlen("memlim")) == 0) { //prefix = memlim
+
+        }
+        else if(strcmp(buf, "exit\n") == 0 || strcmp(buf, "exit") == 0) { // 개행 문자까지 들어와서, 전자에서 조건 충족.
             break;
+        } 
+        else {
+            printf(1, "Failed to parse the command!");
         }
     }
     exit();

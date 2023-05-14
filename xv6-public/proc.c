@@ -558,3 +558,13 @@ setmemorylimit(int pid, int limit) {
   release(&ptable.lock);
   return -1; // failed to find the target.
 }
+
+void
+pmanager_list(void) {
+  struct proc* p;
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    printf(1, "%s %d %u %u %u\n", p->name, p->pid, PGROUNDUP(p->stackSize), p->sz, p->memorylimit);
+  }
+  release(&ptable.lock);
+}
