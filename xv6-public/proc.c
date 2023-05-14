@@ -569,10 +569,9 @@ pmanagerList(void) {
   [RUNNING]   "run   ",
   [ZOMBIE]    "zombie"
   };
-  int i;
+
   struct proc *p;
   char *state;
-  uint pc[10];
 
   //acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
@@ -587,6 +586,8 @@ pmanagerList(void) {
     uint pages = (PGROUNDUP(p->stackSize));
     cprintf("%s %d %s %d %d %d\n", p->name, p->pid, state, pages, p->sz, p->memorylimit);
   /*
+    uint pc[10];
+    int i;
     if(p->state == SLEEPING){
       getcallerpcs((uint*)p->context->ebp+2, pc);
       for(i=0; i<10 && pc[i] != 0; i++)
