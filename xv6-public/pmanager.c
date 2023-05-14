@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
             }
             int i,j;
             char pid_buf[MAX_INPUT_STRING];
-            for(i = 0, j = strlen("kill") + 1; j < MAX_INPUT_STRING && buf[j] >= '0' && buf[j] <= '9'; i++, j++) {
+            for(i = 0, j = strlen("memlim") + 1; j < MAX_INPUT_STRING && buf[j] >= '0' && buf[j] <= '9'; i++, j++) {
                 pid_buf[i] = buf[j];
             }
             pid_buf[++i] = 0;
