@@ -81,8 +81,11 @@ int main(int argc, char *argv[])
             int pid = atoi(pid_buf);
             printf(1, "Killing target PID: %d...\n", pid);
             //kill
-            kill(pid);
-            printf(1, "Done!\n");
+            if(!kill(pid)){
+                printf(1, "Done!\n");
+            } else {
+                printf(1, "Failed! No process with PID:%d found.\n", pid);
+            }
         }
         else if(strncmp(buf, "memlim", strlen("memlim")) == 0) { //prefix = memlim
 
