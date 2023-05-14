@@ -188,3 +188,7 @@ void            clearpteu(pde_t *pgdir, char *uva);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
+
+//ELE3021 Project#2
+int exec2(char *path, char **argv, int stacksize);
+int setmemorylimit(int pid, int limit); //in proc.c

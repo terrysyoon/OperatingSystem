@@ -88,6 +88,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->memorylimit = 0; // Default memory limit: unlimited. TBS.
 
   release(&ptable.lock);
 
@@ -531,4 +532,29 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+int
+setmemorylimit(int pid, int limit) {
+  struct proc* p;
+
+  if(limit < 0) {
+    return -1;
+  }
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->pid == pid) { // found the target.
+      if((limit == 0) || p->sz < limit) { // limit 설정 가능. limit 0은 unlimited, special case. 조건이 이게 맞는지는 확인 해보기.
+        p->memorylimit = limit;
+        release(&ptable.lock);
+        return 0; // op success
+      }
+      else { // 명세: 이미 할당된 메모리가 더 큰 경우 에러
+        release(&ptable.lock);
+        return -1; // op fail
+      }
+    }
+  }
+  release(&ptable.lock);
+  return -1; // failed to find the target.
 }
