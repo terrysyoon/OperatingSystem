@@ -54,10 +54,11 @@ int main(int argc, char *argv[])
     int nbuf = MAX_INPUT_STRING;
 
     while(1) {
-        printf(2, "$ ");
+        printf(1, "pmanager> ");
         memset(buf, 0, nbuf);
         gets(buf, nbuf);
-        printf(2, "%s \n", buf);
+        if(buf[0] == 0) continue; //EOF
+        printf(1, "%s \n", buf);
         if(strcmp(buf, "exit") == 0) {
             break;
         }
