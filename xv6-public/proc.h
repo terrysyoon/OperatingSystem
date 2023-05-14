@@ -51,7 +51,7 @@ struct proc {
   char name[16];               // Process name (debugging)
 
   //ELE3021 Project#2
-  uint memorylimit //Memory limit, in bytes. 0 stands for limitless, which is the initial state.
+  uint memorylimit; //Memory limit, in bytes. 0 stands for limitless, which is the initial state.
 };
 
 // Process memory is laid out contiguously, low addresses first:
