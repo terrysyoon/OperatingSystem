@@ -17,7 +17,8 @@ list
 kill
     • pid를 가진 프로세스를 kill합니다. kill 시스템 콜을 사용하면 됩니다.
     • 성공 여부를 출력합니다.
-    • execute <path> <stacksize>
+
+execute <path> <stacksize>
     • path의 경로에 위치한 프로그램을 stacksize 개수만큼의 스택용 페이지와 함께 실행하게
     합니다.
     • 프로그램에 넘겨주는 인자는 하나로, 0번 인자에 path를 넣어줍니다.
@@ -67,6 +68,21 @@ int main(int argc, char *argv[])
         }
         else if(strncmp(buf, "kill", strlen("kill")) == 0) { //prefix = kill 
             //kill
+            if(buf[strlen("kill")] != ' ') { //kill 뒤에 공백이 아니면
+                printf(1, "Usage: kill <pid>\n");
+                continue;
+            }
+            int i,j;
+            char pid_buf[MAX_INPUT_STRING];
+            for(i = 0, j = strlen("kill") + 1; j < MAX_INPUT_STRING && buf[j] >= '0' && buf[j] <= '9'; i++, j++) {
+                pid_buf[i] = buf[j];
+            }
+            pid_buf[++i] = 0;
+            int pid = atoi(pid_buf);
+            printf(1, "Killing target PID: %d...\n", pid);
+            //kill
+            kill(pid);
+            printf(1, "Done!\n");
         }
         else if(strncmp(buf, "memlim", strlen("memlim")) == 0) { //prefix = memlim
 
