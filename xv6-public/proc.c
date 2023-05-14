@@ -583,7 +583,9 @@ pmanagerList(void) {
       state = states[p->state];
     else
       state = "???";
-    cprintf("%s %d %s %u %u %u\n", p->name, p->pid, state, (PGROUNDUP(p->stackSize)), p->sz, p->memorylimit);
+    
+    uint pages = (PGROUNDUP(p->stackSize));
+    cprintf("%s %d %s %u %u %u\n", p->name, p->pid, state, pages, p->sz, p->memorylimit);
   
     if(p->state == SLEEPING){
       getcallerpcs((uint*)p->context->ebp+2, pc);
