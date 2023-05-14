@@ -38,3 +38,7 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+
+/* ELE3021 Project#2 Syscalls */
+int setmemorylimit(int, int);
+void pmanagerList(void);
