@@ -27,6 +27,7 @@ OBJS = \
 	uart.o\
 	vectors.o\
 	vm.o\
+	ELE3021_proj2_syscall.o\
 
 # Cross-compiling (e.g., on Mac OS X)
 # TOOLPREFIX = i386-jos-elf
