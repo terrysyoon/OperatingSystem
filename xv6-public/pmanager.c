@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
         if(strcmp(buf, "list\n") == 0 || strcmp(buf, "list") == 0) {
             //list
             printf(1, "Name PID NumberOfStackPages Size Limit\n");
-            pmanager_list();
+            pmanagerList();
             printf(1, "End of List\n");
         }
         else if(strncmp(buf, "kill", strlen("kill")) == 0) { //prefix = kill 
