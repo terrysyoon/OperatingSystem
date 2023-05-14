@@ -546,7 +546,7 @@ setmemorylimit(int pid, int limit) {
     if(p->pid == pid) { // found the target.
       if((limit == 0) || p->sz <= limit) { // limit 설정 가능. limit 0은 unlimited, special case. 조건이 이게 맞는지는 확인 해보기.
         p->memorylimit = limit;
-        cprintf("set!\n");
+        //cprintf("set!\n");
         release(&ptable.lock);
         return 0; // op success
       }
