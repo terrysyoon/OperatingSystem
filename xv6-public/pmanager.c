@@ -50,6 +50,7 @@ exit
 #define MAX_INPUT_STRING (400)
 
 int fork1(void);
+void panic(char *s);
 
 int main(int argc, char *argv[])
 {
@@ -170,4 +171,11 @@ fork1(void)
   if(pid == -1)
     panic("fork");
   return pid;
+}
+
+void
+panic(char *s)
+{
+  printf(2, "%s\n", s);
+  exit();
 }

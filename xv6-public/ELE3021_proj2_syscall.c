@@ -19,7 +19,7 @@ int sys_exec2(void) {
     char *path;
     char **argv;
     int stacksize;
-    if(argptr(0, &path, sizeof(*path)) < 0 || argptr(1, &argv, sizeof(*argv)) < 0 || argint(2, &stacksize) < 0)
+    if(argptr(0, &path, sizeof(*path)) < 0 || argptr(1, ((char**)&argv), sizeof(*argv)) < 0 || argint(2, &stacksize) < 0)
         return -1;
     return exec2(path, argv, stacksize);
 }
