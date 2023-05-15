@@ -172,9 +172,9 @@ int exec2(char *path, char **argv, int stacksize) {
   // Allocate two pages at the next page boundary.
   // Make the first inaccessible.  Use the second as the user stack.
   sz = PGROUNDUP(sz);
-  if((sz = allocuvm(pgdir, sz, sz + 2*PGSIZE)) == 0) //여기만 바꾸면 될거 같은데.
+  if((sz = allocuvm(pgdir, sz, sz + (stacksize+1)*PGSIZE)) == 0) //여기만 바꾸면 될거 같은데.
     goto bad;
-  clearpteu(pgdir, (char*)(sz - 2*PGSIZE)); //가드페이지.
+  clearpteu(pgdir, (char*)(sz - (stacksize+1)*PGSIZE)); //가드페이지.
   sp = sz;
 
   // Push argument strings, prepare rest of stack in ustack.
@@ -186,7 +186,8 @@ int exec2(char *path, char **argv, int stacksize) {
       goto bad;
     ustack[3+argc] = sp;
   }
-  ustack[3+argc] = 0;
+  ustack[3+argc] = 0; //배열의 마지막 entry
+  //ustack[2+argc == maxarg번째 argument]는 비워놓음. 다 차도 sp가 빈 칸 하나는 point할 수 있도록.
 
   ustack[0] = 0xffffffff;  // fake return PC
   ustack[1] = argc;
