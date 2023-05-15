@@ -12,3 +12,5 @@
 #define NBUF         (MAXOPBLOCKS*3)  // size of disk block cache
 #define FSSIZE       1000  // size of file system in blocks
 
+#define MIN_STACK_SIZE (1) //exec2()
+#define MAX_STACK_SIZE (100) //exec2()

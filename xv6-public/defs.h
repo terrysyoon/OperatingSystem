@@ -190,6 +190,6 @@ void            clearpteu(pde_t *pgdir, char *uva);
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
 
 //ELE3021 Project#2
-int exec2(char *path, char **argv, int stacksize);
+int exec2(char *path, char **argv, int stacksize); //in exec.c
 int setmemorylimit(int pid, int limit); //in proc.c
 void pmanagerList(void); //in proc.c
