@@ -42,3 +42,4 @@ int atoi(const char*);
 /* ELE3021 Project#2 Syscalls */
 int setmemorylimit(int, int);
 void pmanagerList(void);
+int exec2(char*, char**, int);
