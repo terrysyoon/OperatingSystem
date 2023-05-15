@@ -97,15 +97,16 @@ int main(int argc, char *argv[])
             int i,j;
             char path_buf[MAX_INPUT_STRING];
             if(buf[strlen("execute")] != ' ') { //kill 뒤에 공백이 아니면
-                printf(1, "Usage: execute <path> <limit>\n");
+                printf(1, "Could not parse path!\nUsage: execute <path> <limit>\n");
                 continue;
             }
-            for(i = 0, j = strlen("execute") + 1; j < MAX_INPUT_STRING && buf[j] >= '0' && buf[j] <= '9'; i++, j++) {
+            for(i = 0, j = strlen("execute") + 1; j < MAX_INPUT_STRING && buf[j] != '\0' && buf[j] != ' '; i++, j++) {
                 path_buf[i] = buf[j];
             }
             path_buf[++i] = 0;
+            printf(1, "PATH: %s\n", path_buf);
             if(buf[j] != ' ') { //kill 뒤에 공백이 아니면
-                printf(1, "Usage: execute <path> <limit>\n");
+                printf(1, "Could not parse limit!\nUsage: execute <path> <limit>\n");
                 continue;
             }
             char limit_buf[MAX_INPUT_STRING];
