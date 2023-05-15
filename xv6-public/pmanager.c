@@ -60,7 +60,10 @@ int main(int argc, char *argv[])
         gets(buf, nbuf);
         if(buf[0] == 0) continue; //EOF
         printf(1, "%s", buf);
-        if(strcmp(buf, "list\n") == 0 || strcmp(buf, "list") == 0) {
+        if(strcmp(buf, "exit\n") == 0 || strcmp(buf, "exit") == 0) { // 개행 문자까지 들어와서, 전자에서 조건 충족.
+            break;
+        } 
+        else if(strcmp(buf, "list\n") == 0 || strcmp(buf, "list") == 0) {
             //list
             printf(1, "Name PID State NumberOfStackPages Size Limit\n");
             pmanagerList();
@@ -94,7 +97,7 @@ int main(int argc, char *argv[])
                 printf(1, "Usage: execute <path> <limit>\n");
                 continue;
             }
-            for(i = 0, j = strlen("memlim") + 1; j < MAX_INPUT_STRING && buf[j] >= '0' && buf[j] <= '9'; i++, j++) {
+            for(i = 0, j = strlen("execute") + 1; j < MAX_INPUT_STRING && buf[j] >= '0' && buf[j] <= '9'; i++, j++) {
                 path_buf[i] = buf[j];
             }
             path_buf[++i] = 0;
@@ -111,6 +114,17 @@ int main(int argc, char *argv[])
 
             printf(1, "Execute>> Path: %s Limit: %d\n", path_buf, limit);
             //fork~exec2
+            int fork_res = fork1();
+            char* argv[2];
+            argv[0] = path_buf;
+            if(fork_res == 0) { //child process
+                exec2(path_buf, &argv[0], limit);
+            } else if(fork_res > 0) { //parent process
+                printf(1, "Running!\n");
+            } else {
+                //forking error
+                exit();
+            }
         }
         else if(strncmp(buf, "memlim", strlen("memlim")) == 0) { //prefix = memlim
             if(buf[strlen("memlim")] != ' ') { //kill 뒤에 공백이 아니면
@@ -138,9 +152,6 @@ int main(int argc, char *argv[])
                 printf(1, "Fail!\n");
             }
         }
-        else if(strcmp(buf, "exit\n") == 0 || strcmp(buf, "exit") == 0) { // 개행 문자까지 들어와서, 전자에서 조건 충족.
-            break;
-        } 
         else {
             printf(1, "Failed to parse the command!\n");
         }
