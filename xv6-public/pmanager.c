@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
                 printf(1, "Failed! No process with PID:%d found.\n", pid);
             }
         }
-        else if(strncmp(buf, "execute", strlen("execute"))) {
+        else if(strncmp(buf, "execute", strlen("execute")) == 0) {
             int i,j;
             char path_buf[MAX_INPUT_STRING];
             if(buf[strlen("execute")] != ' ') { //kill 뒤에 공백이 아니면
