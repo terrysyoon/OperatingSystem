@@ -24,3 +24,4 @@
 /*ELE3021 Project#2 Syscalls*/
 #define SYS_setmemorylimit 22
 #define SYS_pmanagerList 23
+#define SYS_exec2 24

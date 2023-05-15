@@ -49,6 +49,8 @@ exit
 
 #define MAX_INPUT_STRING (400)
 
+int fork1(void);
+
 int main(int argc, char *argv[])
 {
     char buf[MAX_INPUT_STRING];
@@ -157,4 +159,15 @@ int main(int argc, char *argv[])
         }
     }
     exit();
+}
+
+int
+fork1(void)
+{
+  int pid;
+
+  pid = fork();
+  if(pid == -1)
+    panic("fork");
+  return pid;
 }
