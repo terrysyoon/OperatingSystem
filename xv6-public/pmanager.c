@@ -122,8 +122,12 @@ int main(int argc, char *argv[])
             char* argv[2];
             argv[0] = path_buf;
             if(fork_res == 0) { //child process
-                if(fork1() == 0){ //why fork again?
+                int fork_res2 = fork1();
+                if(fork_res2 == 0){ //why fork again?
                     exec2(path_buf, &argv[0], limit);
+                } else if(fork_res2 > 0) {
+                    wait();
+                    exit();
                 }
             } else if(fork_res > 0) { //parent process
                 printf(1, "Running!\n");
