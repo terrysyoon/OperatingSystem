@@ -128,6 +128,8 @@ int exec2(char *path, char **argv, int stacksize) {
   pde_t *pgdir, *oldpgdir;
   struct proc *curproc = myproc();
 
+  uint memorylimit = curproc->memorylimit;
+
   begin_op();
 
   if((ip = namei(path)) == 0){
@@ -176,6 +178,10 @@ int exec2(char *path, char **argv, int stacksize) {
     goto bad;
   clearpteu(pgdir, (char*)(sz - (stacksize+1)*PGSIZE)); //가드페이지.
   sp = sz;
+
+  if(memorylimit != 0 && sz > memorylimit) { //enforce memory limit
+    goto bad;
+  }
 
   // Push argument strings, prepare rest of stack in ustack.
   for(argc = 0; argv[argc]; argc++) {
