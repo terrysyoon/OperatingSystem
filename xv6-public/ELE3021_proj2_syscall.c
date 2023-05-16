@@ -23,3 +23,8 @@ int sys_exec2(void) {
         return -1;
     return exec2(path, argv, stacksize);
 }
+
+int sys_procdump(void) {
+    procdump();
+    return 1;
+}

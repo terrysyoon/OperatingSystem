@@ -25,3 +25,4 @@
 #define SYS_setmemorylimit 22
 #define SYS_pmanagerList 23
 #define SYS_exec2 24
+#define SYS_procdump 25

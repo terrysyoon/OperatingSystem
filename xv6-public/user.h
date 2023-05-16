@@ -43,3 +43,4 @@ int atoi(const char*);
 int setmemorylimit(int, int);
 void pmanagerList(void);
 int exec2(char*, char**, int);
+void procdump(void);
