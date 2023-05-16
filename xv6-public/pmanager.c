@@ -125,13 +125,14 @@ int main(int argc, char *argv[])
                 int fork_res2 = fork1();
                 if(fork_res2 == 0){ //why fork again?
                     exec2(path_buf, &argv[0], limit);
-                } /*else {
+                } else {
                     //wait();
                     exit();
-                }*/
+                }
                 exit();
             } else if(fork_res > 0) { //parent process
                 printf(1, "Running!\n");
+                wait();
                 //exit();
             } else {
                 //forking error
