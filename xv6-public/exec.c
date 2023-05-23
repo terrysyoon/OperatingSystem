@@ -49,7 +49,7 @@ exec(char *path, char **argv)
       goto bad;
     if(ph.vaddr + ph.memsz < ph.vaddr)
       goto bad;
-    if((sz = allocuvm(pgdir, sz, ph.vaddr + ph.memsz)) == 0)
+    if((sz = allocuvm(pgdir, sz, ph.vaddr + ph.memsz)) == 0) // 여기서는 data만 할당?
       goto bad;
     if(ph.vaddr % PGSIZE != 0)
       goto bad;
@@ -63,7 +63,7 @@ exec(char *path, char **argv)
   // Allocate two pages at the next page boundary.
   // Make the first inaccessible.  Use the second as the user stack.
   sz = PGROUNDUP(sz);
-  if((sz = allocuvm(pgdir, sz, sz + 2*PGSIZE)) == 0)
+  if((sz = allocuvm(pgdir, sz, sz + 2*PGSIZE)) == 0) // 여기서는 stack만 할당. stack은 여기서만 할당. heap은 원래 없다가 sbrk로 할당. 
     goto bad;
   clearpteu(pgdir, (char*)(sz - 2*PGSIZE));
   sp = sz;
@@ -92,6 +92,10 @@ exec(char *path, char **argv)
     if(*s == '/')
       last = s+1;
   safestrcpy(curproc->name, last, sizeof(curproc->name));
+
+  // thread 정리 ~
+  exec_remove_thread(curproc);
+  // ~ thread 정리
 
   // Commit to the user image.
   oldpgdir = curproc->pgdir;
@@ -129,6 +133,8 @@ int exec2(char *path, char **argv, int stacksize) {
   struct proc *curproc = myproc();
 
   uint memorylimit = curproc->memorylimit;
+  uint stackBeginAddress;
+  uint stackEndAddress;
 
   begin_op();
 
@@ -174,11 +180,12 @@ int exec2(char *path, char **argv, int stacksize) {
   // Allocate two pages at the next page boundary.
   // Make the first inaccessible.  Use the second as the user stack.
   sz = PGROUNDUP(sz);
+  stackBeginAddress = sz;
   if((sz = allocuvm(pgdir, sz, sz + (stacksize+1)*PGSIZE)) == 0) //여기만 바꾸면 될거 같은데.
     goto bad;
   clearpteu(pgdir, (char*)(sz - (stacksize+1)*PGSIZE)); //가드페이지.
   sp = sz;
-
+  stackEndAddress = sz;
   if(memorylimit != 0 && sz > memorylimit) { //enforce memory limit
     goto bad;
   }
@@ -209,12 +216,18 @@ int exec2(char *path, char **argv, int stacksize) {
       last = s+1;
   safestrcpy(curproc->name, last, sizeof(curproc->name));
 
+  // thread 정리 ~
+  exec_remove_thread(curproc);
+  // ~ thread 정리
+
   // Commit to the user image.
   oldpgdir = curproc->pgdir;
   curproc->pgdir = pgdir;
   curproc->sz = sz;
   curproc->tf->eip = elf.entry;  // main
   curproc->tf->esp = sp;
+
+  curproc->stackSize = stacksize;
   switchuvm(curproc);
   freevm(oldpgdir);
   return 0;
