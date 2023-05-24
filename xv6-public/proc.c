@@ -207,6 +207,7 @@ fork(void)
   struct proc *np;
   struct proc *curproc = myproc();
 
+  cprintf("fork called\n");
   // Allocate process.
   if((np = allocproc()) == 0){
     return -1;
