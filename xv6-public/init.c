@@ -19,7 +19,7 @@ main(void)
   dup(0);  // stdout
   dup(0);  // stderr
   
-  printf(1, "%d init: main\n");
+  printf(1, "init: main\n");
 
   for(;;){
     printf(1, "init: starting sh\n");
@@ -29,6 +29,7 @@ main(void)
       exit();
     }
     if(pid == 0){
+      printf(1, "init child: calling exec\n");
       exec("sh", argv);
       printf(1, "init: exec sh failed\n");
       exit();
