@@ -19,6 +19,8 @@ exec(char *path, char **argv)
   pde_t *pgdir, *oldpgdir;
   struct proc *curproc = myproc();
 
+  cprintf("exec called: %d\n", myproc()->pid);
+
   begin_op();
 
   if((ip = namei(path)) == 0){
@@ -230,7 +232,7 @@ int exec2(char *path, char **argv, int stacksize) {
   curproc->stackSize = stacksize;
   curproc->stackBeginAddress = stackBeginAddress;
   curproc->stackEndAddress = stackEndAddress;
-  
+
   switchuvm(curproc);
   freevm(oldpgdir);
   return 0;
