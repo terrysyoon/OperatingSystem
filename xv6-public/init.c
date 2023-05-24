@@ -18,6 +18,8 @@ main(void)
   }
   dup(0);  // stdout
   dup(0);  // stderr
+  
+  printf(1, "%d init: main\n");
 
   for(;;){
     printf(1, "init: starting sh\n");
