@@ -353,6 +353,9 @@ wait(void)
         p->name[0] = 0;
         p->killed = 0;
         p->state = UNUSED;
+
+
+        p->memorylimit = 0; // 유일하게 초기화 안되던 부분
         release(&ptable.lock);
         return pid;
       }
