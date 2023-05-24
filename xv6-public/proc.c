@@ -8,7 +8,7 @@
 #include "spinlock.h"
 
 #include "pthread.h"
-#include "stdio.h"
+//#include "stdio.h"
 
 int
 sbrk(int n);
@@ -286,7 +286,7 @@ exit(void)
     panic("init exiting");
 
   if(curproc->tcb.threadtype == T_THREAD){ // subthread인 경우
-    printf(1, "exit: subthread cannot call exit()\n");
+    cprintf(1, "exit: subthread cannot call exit()\n");
     return;
   }
 
@@ -683,7 +683,7 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
     
     //kstack, pid, tf, context은 여기서 할당
     if((np = allocproc()) == 0) {
-        printf(1, "thread_create: allocproc() failed!\n");
+        cprintf("thread_create: allocproc() failed!\n");
         return -1;
     }
 
@@ -705,7 +705,7 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
 
     stack = (void*)np->stackBeginAddress;
     if((uint)stack % PGSIZE) { 
-        printf(1, "thread_create: Stack not aligned!\n");
+        cprintf("thread_create: Stack not aligned!\n");
         // 정상적인 상황이라면 여기 올 일이 없다.
     }
     np->stack = stack; // 접근은 sp로, 이 포인터는 할당 해제 용. 마지막 페이지는 가드
@@ -834,7 +834,7 @@ int thread_join(thread_t thread, void **retval){
 
       if(p->tcb.threadtype == T_MAIN) { // Design: Main thread는 join 불가
         release(&ptable.lock);
-        printf(1, "thread_join: Main thread cannot be joined!\n");
+        cprintf("thread_join: Main thread cannot be joined!\n");
         return -1; 
       }
 
