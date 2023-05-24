@@ -1,4 +1,6 @@
 // Per-CPU state
+#include "pthread.h"
+
 struct cpu {
   uchar apicid;                // Local APIC ID
   struct context *scheduler;   // swtch() here to enter scheduler
