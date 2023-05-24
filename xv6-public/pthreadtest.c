@@ -12,6 +12,7 @@ void *myThread(void *arg)
 {
 	printf(1, "%s: begin\n", (char *)arg);
 	int i;
+	printf(1, "%s: i created\n", (char *)arg);
 	for (i = 0; i < 10000000; i++)
 	{
 		counter = counter + 1;
