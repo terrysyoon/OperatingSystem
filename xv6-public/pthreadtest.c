@@ -54,6 +54,6 @@ int main()
 	// Done
 	printf(1, "p2 joined: %d\n",p2,thread_join(p2, NULL));
 	printf(1, "main: done with both (counter = %d)\n", counter);
-	return 0;
+	//return 0;
 	exit();
 }
