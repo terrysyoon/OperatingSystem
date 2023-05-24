@@ -286,7 +286,7 @@ exit(void)
     panic("init exiting");
 
   if(curproc->tcb.threadtype == T_THREAD){ // subthread인 경우
-    cprintf(1, "exit: subthread cannot call exit()\n");
+    cprintf("exit: subthread cannot call exit()\n");
     return;
   }
 
@@ -819,7 +819,7 @@ void thread_exit(void *retval){ // exit과 비슷하게 구현. 메인쓰레드�
 int thread_join(thread_t thread, void **retval){
   
   struct proc *p;
-  void *stackToFree;
+  //void *stackToFree;
 
   int haveThread, pid;
   struct proc *curproc = myproc();
@@ -863,7 +863,7 @@ int thread_join(thread_t thread, void **retval){
         p->stackBeginAddress = 0;
         p->stackEndAddress = 0;
         p->stackSize = 0;
-        stackToFree = p->stack;
+        //stackToFree = p->stack;
         p->stack = 0;
 
         // User stack 여기서 반환해야 하는데... 어떻게?
