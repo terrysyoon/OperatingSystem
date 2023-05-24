@@ -220,6 +220,19 @@ fork(void)
     np->state = UNUSED;
     return -1;
   }
+
+
+  // debug
+  np->tcb.pgid = 0;
+  np->tcb.tid = 0;
+  np->tcb.threadtype = T_THREAD; //UNUSED가 맞을 것 같은데 왜 enum 타입 추가 시 에러 발생?
+  np->memorylimit = 0;
+  np->stackBeginAddress = 0;
+  np->stackEndAddress = 0;
+  np->stackSize = 0;
+  //stackToFree = p->stack;
+  np->stack = 0;
+  // ~debug
 /* BS
   // thread 복제~ thread create 참고
   
