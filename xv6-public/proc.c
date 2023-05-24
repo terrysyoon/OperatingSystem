@@ -887,9 +887,12 @@ int thread_join(thread_t thread, void **retval){
         kfree(p->kstack);
         p->kstack = 0;
         //freevm(p->pgdir); // 이러면 main thread의 page table도 해제되는거다. stack만 해제하도록 수정 필요.
-        if(deallocuvm(p->pgdir, p->stackBeginAddress, p->stackEndAddress) != p->stackEndAddress) {
+        
+        //Debug : May 24th 11PM
+        /*if(deallocuvm(p->pgdir, p->stackBeginAddress, p->stackEndAddress) != p->stackEndAddress) {
           panic("thread_join: stack deallocation failed");
-        }
+        }*/
+        // ~Debug: May 24th 11PM
         p->pid = 0;
         p->parent = 0;
         p->name[0] = 0;
