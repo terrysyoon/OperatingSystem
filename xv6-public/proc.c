@@ -236,11 +236,9 @@ fork(void)
   return -1;
   // ~ thread 복제
 */
-  np->sz = curproc->sz;
-  np->parent = curproc;
-  *np->tf = *curproc->tf;
 
   //Project 2 추가
+  np->tid = np->pid; // main thread의 tid는 pid와 같다.
   np->tcb.pgid = np->pid; // 새 process group 만들기
   np->tcb.tid = np->pid; // main thread의 tid는 pid와 같다.
   np->tcb.threadtype = T_MAIN; // main thread
@@ -249,6 +247,9 @@ fork(void)
   np->stackEndAddress = curproc->stackEndAddress;
   np->stackSize = curproc->stackSize;
 
+  np->sz = curproc->sz;
+  np->parent = curproc;
+  *np->tf = *curproc->tf;
 
 
   // Clear %eax so that fork returns 0 in the child.
@@ -355,7 +356,7 @@ wait(void)
         p->state = UNUSED;
 
 
-        p->memorylimit = 0; // 유일하게 초기화 안되던 부분
+        //p->memorylimit = 0; // 유일하게 초기화 안되던 부분
         release(&ptable.lock);
         return pid;
       }
