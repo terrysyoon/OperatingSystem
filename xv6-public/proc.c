@@ -790,6 +790,8 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
 
     //np->tcb = np->pid;
 
+    *thread = np->pid; // thread id 반환
+
     acquire(&ptable.lock);
 
     np->state = RUNNABLE;
@@ -871,7 +873,7 @@ int thread_join(thread_t thread, void **retval){
       if(p->parent != curproc || p->pid != thread) // 부모 thread 만이 자식 thread join 가능. thread 찾더라도 부모 아니면 join 불가
         continue;
 
-      if(p->tcb.threadtype == T_MAIN) { // Design: Main thread는 join 불가
+      if(p->tcb.threadtype == T_MAIN) { // Design: Main thread는 join의 대상이 될 수 없음
         release(&ptable.lock);
         cprintf("thread_join: Main thread cannot be joined!\n");
         return -1; 
