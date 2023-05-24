@@ -19,7 +19,7 @@ exec(char *path, char **argv)
   pde_t *pgdir, *oldpgdir;
   struct proc *curproc = myproc();
 
-  cprintf("exec called: %d\n", myproc()->pid);
+  //cprintf("exec called: %d\n", myproc()->pid);
 
   begin_op();
 
