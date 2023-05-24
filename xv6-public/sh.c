@@ -168,6 +168,7 @@ main(void)
       runcmd(parsecmd(buf));
     wait();
   }
+  printf(1, "Shell exit!\n");
   exit();
 }
 
