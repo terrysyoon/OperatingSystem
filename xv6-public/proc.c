@@ -282,7 +282,7 @@ exit(void)
   struct proc *curproc = myproc();
   struct proc *p;
   int fd;
-
+  cprintf("exit called %d\n",curproc->pid);
   if(curproc == initproc)
     panic("init exiting");
 
@@ -400,7 +400,7 @@ scheduler(void)
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
-      cprintf("scheduler: %d\n",p->pid);
+      //cprintf("scheduler: %d\n",p->pid);
 
       swtch(&(c->scheduler), p->context);
       switchkvm();
