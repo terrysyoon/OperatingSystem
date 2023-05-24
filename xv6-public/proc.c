@@ -886,7 +886,7 @@ int thread_join(thread_t thread, void **retval){
 // 기본적으로 kill과 동일하지만 newMain은 제외, threadtype의 변경 수반
 // 또한, 시간이 걸리더라도 thread 모두 종료된 것 까지 확인
 int
-exec_removeThread(struct proc *newMain) {
+exec_remove_thread(struct proc *newMain) {
   struct proc *p;
   int cnt = 0;
   acquire(&ptable.lock);
@@ -903,7 +903,7 @@ exec_removeThread(struct proc *newMain) {
         p->state = RUNNABLE;
 
       release(&ptable.lock);
-      thread_join(p->tcb, 0); // 얘는 lock이 없어야.
+      thread_join(p->tid, 0); // 얘는 lock이 없어야.
       acquire(&ptable.lock);
     }
   }

@@ -228,6 +228,9 @@ int exec2(char *path, char **argv, int stacksize) {
   curproc->tf->esp = sp;
 
   curproc->stackSize = stacksize;
+  curproc->stackBeginAddress = stackBeginAddress;
+  curproc->stackEndAddress = stackEndAddress;
+  
   switchuvm(curproc);
   freevm(oldpgdir);
   return 0;

@@ -5,11 +5,11 @@
 //enum threadstate { T_UNUSED, T_EMBRYO, T_SLEEPING, T_RUNNABLE, T_RUNNING, T_ZOMBIE };
 enum threadtype_t {T_MAIN, T_THREAD};
 
-struct TCB {
+typedef struct {
   int pgid;
   int tid;
   enum threadtype_t threadtype;
-};
+}tcb_t;
 
 typedef int thread_t;
 

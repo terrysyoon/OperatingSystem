@@ -75,8 +75,8 @@ struct proc {
   char name[16];               // Process name (debugging)
 
   //ELE3021 Project#2
-  //int tid; // thread id
-  struct TCB tcb; // thread control block. create 때 이거 포인터 주면 커널 영역이라 안될텐데..?
+  thread_t tid; // thread id
+  tcb_t tcb; // thread control block. create 때 이거 포인터 주면 커널 영역이라 안될텐데..?
   uint memorylimit; // Memory limit, in bytes. 0 stands for limitless, which is the initial state.
   uint stackBeginAddress; // Begin address of the stack = DATA 영역 끝 + 1 (guard page의 시작 logical address)
   uint stackEndAddress; // stack 영역 끝
