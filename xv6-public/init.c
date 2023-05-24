@@ -33,7 +33,8 @@ main(void)
       printf(1, "init: exec sh failed\n");
       exit();
     }
-    while((wpid=wait()) >= 0 && wpid != pid)
+    while((wpid=wait()) >= 0 && wpid != pid) //이게 종료가 된다고??
       printf(1, "zombie!\n");
+    printf(1, "init: sh terminated pid %d\n", wpid);
   }
 }
