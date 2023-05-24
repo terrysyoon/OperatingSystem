@@ -8,6 +8,10 @@
 #include "spinlock.h"
 
 #include "pthread.h"
+#include "stdio.h"
+
+int
+sbrk(int n);
 
 struct {
   struct spinlock lock;
@@ -217,7 +221,7 @@ fork(void)
   }
 /* BS
   // thread 복제~ thread create 참고
-  /*
+  
   * thread 여러 개 동시 생성 시 실패하는 경우:
   * 1. allocproc()에서 실패 : unused 부족 or kalloc() 실패
   * 2. stack 할당 실패
@@ -661,7 +665,8 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
     
     struct proc *curproc = myproc();
     struct proc *np;
-    int i, tid;
+    //int i, tid;
+    int i;
 
     void *stack; // stack 할당
     
@@ -760,7 +765,7 @@ void thread_exit(void *retval){ // exit과 비슷하게 구현. 메인쓰레드�
   
   struct proc *curproc = myproc();
   struct proc *p;
-  int fd;
+  //int fd;
 
   if(curproc == initproc)
     panic("init exiting");
@@ -865,7 +870,7 @@ int thread_join(thread_t thread, void **retval){
         // retval을 넣은 다음에야 user stack을 free할 수 있을 것 같은데...
 
         release(&ptable.lock);
-        free(stackToFree);
+        //free(stackToFree); 이건 malloc으로 잡은 stack일 때. 
         return pid; // tid 반환
       }
     }
@@ -924,4 +929,15 @@ void killHandler() {
   else {
     panic("killedHandler: threadtype error");
   }
+}
+
+// replica of sys_sbrk
+int
+sbrk(int n)
+{
+  int addr;
+  addr = myproc()->sz;
+  if(growproc(n) < 0)
+    return -1;
+  return addr;
 }
