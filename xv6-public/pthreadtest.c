@@ -38,7 +38,7 @@ int main()
 	}else {
 		exit();
 	}
-	thread_t p1
+	thread_t p1;
 	thread_t p2; // thread identifiers.
 	
 	//printf(1, "main: create~ ");
