@@ -84,6 +84,8 @@ allocproc(void)
   struct proc *p;
   char *sp;
 
+  cprintf("alloc proc!\n");
+
   acquire(&ptable.lock);
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
@@ -221,7 +223,7 @@ fork(void)
     return -1;
   }
 
-
+/*
   // debug
   np->tcb.pgid = 0;
   np->tcb.tid = 0;
@@ -233,6 +235,8 @@ fork(void)
   //stackToFree = p->stack;
   np->stack = 0;
   // ~debug
+*/
+
 /* BS
   // thread 복제~ thread create 참고
   
