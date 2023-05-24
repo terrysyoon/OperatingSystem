@@ -47,6 +47,8 @@ int main()
 	
 	
 	thread_create(&p2, myThread, "B");
+	printf(1, "main: create p2: %d\n",p2);
+	
 	//printf(1, "done! \n");
 	// Wait for threads
 	printf(1, "p1 %d joined: %d\n",p1,thread_join(p1, NULL));
