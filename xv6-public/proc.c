@@ -642,8 +642,8 @@ pmanagerList(void) {
     else
       state = "???";
     
-    uint pages = (PGROUNDUP(p->stackSize));
-    cprintf("%s %d %s %d %d %d\n", p->name, p->pid, state, pages, p->sz, p->memorylimit);
+    //uint pages = (PGROUNDUP(p->stackSize));
+    cprintf("%s %d %s %d %d %d %d\n", p->name, p->pid, state, p->stackSize, p->sz, p->memorylimit, p->tcb.threadtype);
   /*
     uint pc[10];
     int i;

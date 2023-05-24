@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
         } 
         else if(strcmp(buf, "list\n") == 0 || strcmp(buf, "list") == 0) {
             //list
-            printf(1, "Name PID State NumberOfStackPages Size Limit\n");
+            printf(1, "Name PID State NumberOfStackPages Size Limit IsThread\n");
             pmanagerList();
             printf(1, "End of List\n");
         }
