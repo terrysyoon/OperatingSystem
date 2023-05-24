@@ -287,7 +287,7 @@ fork(void)
   //np->threadtype = T_MAIN;
 
   release(&ptable.lock);
-  cprintf("fork end: %d\n",pid);
+  //cprintf("fork end: %d\n",pid);
   return pid;
 }
 
@@ -740,8 +740,10 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
     np->stackEndAddress = curproc->sz; //stack grows down
     np->stackBeginAddress = sbrk(PGSIZE * (curproc->stackSize + 1));
     //가드페이지 설정
-    clearpteu(np->pgdir, (char*)(curproc->sz - (curproc->stackSize)*PGSIZE));
 
+    //DEBUG 0524 11PM35~
+    //clearpteu(np->pgdir, (char*)(curproc->sz - (curproc->stackSize)*PGSIZE));
+    //~DEBUG 0524 11PM35
     stack = (void*)np->stackBeginAddress;
     if((uint)stack % PGSIZE) { 
         cprintf("thread_create: Stack not aligned!\n");
