@@ -42,6 +42,7 @@ int main()
 	
 	//printf(1, "main: create~ ");
 	thread_create(&p1, myThread, "A");
+	printf(1, "main: create p1: %d\n",p1);
 	//printf(1, "1 ");
 	thread_create(&p2, myThread, "B");
 	//printf(1, "done! \n");
