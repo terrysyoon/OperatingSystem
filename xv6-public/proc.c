@@ -400,6 +400,7 @@ scheduler(void)
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
+      cprintf("scheduler: %d\n",p->pid);
 
       swtch(&(c->scheduler), p->context);
       switchkvm();
