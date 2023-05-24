@@ -18,7 +18,7 @@ void *myThread(void *arg)
 		counter = counter + 1;
 	}
 	printf(1, "%s: done\n", (char *)arg);
-	//thread_exit((void*)0);
+	thread_exit((void*)0);
 	return NULL;
 }
 
