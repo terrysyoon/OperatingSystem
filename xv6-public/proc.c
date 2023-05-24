@@ -84,7 +84,7 @@ allocproc(void)
   struct proc *p;
   char *sp;
 
-  cprintf("alloc proc!\n");
+  //cprintf("alloc proc!\n");
 
   acquire(&ptable.lock);
 
@@ -209,7 +209,7 @@ fork(void)
   struct proc *np;
   struct proc *curproc = myproc();
 
-  cprintf("fork called\n");
+  //cprintf("fork called\n");
   // Allocate process.
   if((np = allocproc()) == 0){
     return -1;
@@ -300,7 +300,7 @@ exit(void)
   struct proc *curproc = myproc();
   struct proc *p;
   int fd;
-  cprintf("exit called %d\n",curproc->pid);
+  //cprintf("exit called %d\n",curproc->pid);
   if(curproc == initproc)
     panic("init exiting");
 
