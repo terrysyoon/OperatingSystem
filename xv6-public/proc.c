@@ -269,7 +269,7 @@ fork(void)
   //np->threadtype = T_MAIN;
 
   release(&ptable.lock);
-
+  cprintf("fork end: %d\n",pid);
   return pid;
 }
 
