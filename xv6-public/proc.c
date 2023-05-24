@@ -415,15 +415,16 @@ scheduler(void)
   struct cpu *c = mycpu();
   c->proc = 0;
   
-  int first = 1;
+  //int first = 1;
 
   for(;;){
     // Enable interrupts on this processor.
     sti();
+    /*
     if(first) {
       first = 0;
       clearPtable();
-    }
+    }*/
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){

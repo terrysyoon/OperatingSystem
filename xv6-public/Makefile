@@ -183,6 +183,7 @@ UPROGS=\
 	_zombie\
 	_pmanager\
 	_uprocdump\
+	_pthreadtest\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -257,6 +258,7 @@ EXTRA=\
 	.gdbinit.tmpl gdbutil\
 	pmanager.c\
 	uprocdump.c\
+	pthreadtest.c\
 
 dist:
 	rm -rf dist
