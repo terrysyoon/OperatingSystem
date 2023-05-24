@@ -44,15 +44,18 @@ int main()
 	thread_create(&p1, myThread, "A");
 	printf(1, "main: create p1: %d\n",p1);
 	//printf(1, "1 ");
+	
+	
 	thread_create(&p2, myThread, "B");
 	//printf(1, "done! \n");
 	// Wait for threads
 	printf(1, "p1 %d joined: %d\n",p1,thread_join(p1, NULL));
 	//printf(1, "join 1~ ");
-	thread_join(p2, NULL);
+	//thread_join(p2, NULL);
+	printf(1, "p2 %d joined: %d\n",p2,thread_join(p2, NULL));
 	//printf(1, "2!\n ");	
 	// Done
-	printf(1, "p2 joined: %d\n",p2,thread_join(p2, NULL));
+	//printf(1, "p2 joined: %d\n",p2,thread_join(p2, NULL));
 	printf(1, "main: done with both (counter = %d)\n", counter);
 	//return 0;
 	exit();
