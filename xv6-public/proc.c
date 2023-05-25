@@ -661,7 +661,7 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
   int i;
   //void* stack;
 
-  uint sz, sp, ustack[2];
+  uint sz, sp, ustack[4];
 
   if((np = allocproc()) == 0) {
     cprintf("thread_create: allocproc() failed!\n");
@@ -717,11 +717,17 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
   *(uint*)(stack-4) = 0xfffffff0; // fake return PC
   *(uint*)(stack-8) = (uint)arg; // argument
 */
+/*
   ustack[0] = 0xffffffff;  // fake return PC
   ustack[1] = (uint)arg; // argument
+*/
 
-  sp -= 8;
-  if(copyout(np->pgdir, sp, ustack, 8) < 0) {
+  ustack[0] = (uint)arg;  // fake return PC
+  ustack[1] = (uint)arg; // argument
+  ustack[2] = (uint)arg;  // fake return PC
+  ustack[3] = (uint)arg; // argument
+  sp -= 16;
+  if(copyout(np->pgdir, sp, ustack, 16) < 0) {
     cprintf("thread_create: copyout failed!\n");
     return -1;
   }
