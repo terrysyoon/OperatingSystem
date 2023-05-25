@@ -12,7 +12,7 @@ void *myThread(void *arg)
 {
 
 	//sleep(100);
-	printf(1, "%s: begin counter: %d\n", (char *)arg, counter);
+	//printf(1, "%s: begin counter: %d\n", (char *)arg, counter);
 	int i;
 
 	//printf(1, "%s: i created\n", (char *)arg);
@@ -25,11 +25,14 @@ void *myThread(void *arg)
 			//sleep(100);
 		}*/
 	}
+	while(1) {
+
+	}
 	//printf(1, "%s: done\n", (char *)arg);
 	thread_exit(NULL);
 
 
-	
+
 	return NULL;
 }
 
