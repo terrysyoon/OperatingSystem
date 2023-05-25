@@ -722,12 +722,12 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
   ustack[1] = (uint)arg; // argument
 */
 
-  ustack[0] = (uint)arg;  // fake return PC
+  ustack[0] = 0xffffffff;  // fake return PC
   ustack[1] = (uint)arg; // argument
-  ustack[2] = (uint)arg;  // fake return PC
-  ustack[3] = (uint)arg; // argument
-  sp -= 16;
-  if(copyout(np->pgdir, sp, ustack, 16) < 0) {
+  //ustack[2] = (uint)arg;  // fake return PC
+  //ustack[3] = (uint)arg; // argument
+  sp -= 8;
+  if(copyout(np->pgdir, sp, ustack, 8) < 0) {
     cprintf("thread_create: copyout failed!\n");
     return -1;
   }
