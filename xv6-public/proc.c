@@ -715,10 +715,15 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
 }
 
 void thread_exit(void *retval){
+  struct proc *curproc = myproc();
+  acquire(&ptable.lock);
+  curproc->state = ZOMBIE;
+  release(&ptable.lock);
   return;
 }
 
 int thread_join(thread_t thread, void **retval){
+  wait();
   return 0;
 }
 
