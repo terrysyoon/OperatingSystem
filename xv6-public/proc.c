@@ -135,7 +135,7 @@ userinit(void)
   inituvm(p->pgdir, _binary_initcode_start, (int)_binary_initcode_size);
   p->sz = PGSIZE;
   //proj2~
-  p->tcb.procsz = p->sz;
+  //p->tcb.procsz = p->sz;
   //~proj2
   memset(p->tf, 0, sizeof(*p->tf));
   p->tf->cs = (SEG_UCODE << 3) | DPL_USER;
@@ -152,6 +152,7 @@ userinit(void)
 
   p->tcb.pgid = p->pid;
   p->tcb.threadtype = T_MAIN;
+  p->tcb.parentProc = p;
   // ~Proj#2 fields
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
@@ -189,6 +190,7 @@ growproc(int n)
   return 0;
 }
 
+/*
 int
 growproc_thread(int n)
 {
@@ -215,7 +217,7 @@ growproc_thread(int n)
   }
   switchuvm(curproc);
   return 0;
-}
+}*/
 
 // Create a new process copying p as the parent.
 // Sets up stack to return as if from system call.
@@ -241,7 +243,7 @@ fork(void)
   }
   np->sz = curproc->sz;
   // proj2~
-  np->tcb.procsz = np->sz;
+  //np->tcb.procsz = np->sz;
   // ~proj2
   np->parent = curproc;
   *np->tf = *curproc->tf;
@@ -252,6 +254,7 @@ fork(void)
 
   np->tcb.pgid = np->pid;
   np->tcb.threadtype = T_MAIN;
+  np->tcb.parentProc = np;
   // ~proj#2 fields
 
   // Clear %eax so that fork returns 0 in the child.
@@ -657,16 +660,25 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
   struct proc *np; 
 
   int i;
-  void* stack;
+  //void* stack;
 
-  uint ustack[2];
+  uint sz, sp, ustack[2];
 
   if((np = allocproc()) == 0) {
     cprintf("thread_create: allocproc() failed!\n");
     return -1;
   }
+  *thread = np->pid; // thread id
 
   np->pgdir = curproc->pgdir;
+  //Project 2 추가
+  np->memorylimit = curproc->memorylimit; // setmemorylimit하면 같은 pgid인 thread 모두 갱신하게 해야겠네
+  np->stackSize = curproc->stackSize;
+
+  np->tcb.pgid = curproc->tcb.pgid; // 부모와 같은 process group
+  np->tcb.threadtype = T_THREAD; // sub thread
+  np->tcb.parentProc = curproc->tcb.parentProc;
+  /*
   // malloc 대신에 sbrk 사용!!
   np->tcb.stackEndAddress = curproc->tcb.procsz; //stack grows down
   np->tcb.stackBeginAddress = sbrk(PGSIZE * (curproc->stackSize + 1)); //procsz 뒤에 붙이기. 하나는 guard
@@ -676,23 +688,27 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
 
   //가드페이지 설정
   //clearpteu(np->pgdir, (char*)(curproc->sz - (curproc->stackSize)*PGSIZE));
+*/
 
-  stack = (void*)np->tcb.stackBeginAddress;
-  if((uint)stack % PGSIZE) { 
+  sz = np->tcb.parentProc->sz;
+  sz = PGROUNDUP(sz);
+  if((sz = allocuvm(np->pgdir, sz, sz + PGSIZE*(np->stackSize +1)) == 0)) {
+    cprintf("thread_create: allocuvm() failed!\n");
+    return -1;
+  }
+  clearpteu(np->pgdir, (char*)(sz - PGSIZE*(np->stackSize + 1)));
+  np->tcb.parentProc->sz = sz;
+  sp = sz;
+
+  //stack = (void*)np->tcb.stackBeginAddress;
+  if(sp % PGSIZE) { 
       cprintf("thread_create: Stack not aligned!\n");
       // 정상적인 상황이라면 여기 올 일이 없다.
   }
 
-  np->tcb.procsz = curproc->tcb.procsz;
+  //np->tcb.procsz = curproc->tcb.procsz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
-
-  //Project 2 추가
-  *thread = np->pid; // thread id
-  np->tcb.pgid = curproc->tcb.pgid; // 부모와 같은 process group
-  np->tcb.threadtype = T_THREAD; // sub thread
-  np->memorylimit = curproc->memorylimit; // setmemorylimit하면 같은 pgid인 thread 모두 갱신하게 해야겠네
-  np->stackSize = curproc->stackSize;
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
@@ -703,15 +719,15 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
   ustack[0] = 0xffffffff;  // fake return PC
   ustack[1] = (uint)arg; // argument
 
-  stack -= 8;
-  if(copyout(np->pgdir, (uint)stack, ustack, 8) < 0) {
+  sp -= 8;
+  if(copyout(np->pgdir, sp, ustack, 8) < 0) {
     cprintf("thread_create: copyout failed!\n");
     return -1;
   }
 
   // PC, SP 설정. 여기는 exec 참고해서 다시 하기
   np->tf->eip = (uint)start_routine;
-  np->tf->esp = (uint)(stack); 
+  np->tf->esp = sp; 
 
   for(i = 0; i < NOFILE; i++)
     if(curproc->ofile[i])
