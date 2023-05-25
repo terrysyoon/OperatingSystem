@@ -659,6 +659,8 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
   int i;
   void* stack;
 
+  uint ustack[2];
+
   if((np = allocproc()) == 0) {
     cprintf("thread_create: allocproc() failed!\n");
     return -1;
@@ -698,12 +700,18 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
   *(uint*)(stack-4) = 0xfffffff0; // fake return PC
   *(uint*)(stack-8) = (uint)arg; // argument
 */
-  *(uint*)(stack-8) = (uint)arg;
-  *(uint*)(stack-4) = 0xffffffff;
+  ustack[0] = 0xffffffff;  // fake return PC
+  ustack[1] = (uint)arg; // argument
+
+  stack -= 8;
+  if(copyout(np->pgdir, stack, ustack, 8) < 0) {
+    cprintf("thread_create: copyout failed!\n");
+    return -1;
+  }
 
   // PC, SP 설정. 여기는 exec 참고해서 다시 하기
   np->tf->eip = (uint)start_routine;
-  np->tf->esp = (uint)(stack - 8); // argument가 하나인 경우에만 대응하나?
+  np->tf->esp = (uint)(stack); // argument가 하나인 경우에만 대응하나?
 
   for(i = 0; i < NOFILE; i++)
     if(curproc->ofile[i])
