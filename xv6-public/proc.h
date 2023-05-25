@@ -56,7 +56,7 @@ struct proc {
   uint memorylimit; // Memory limit, in bytes. 0 stands for limitless, which is the initial state.
   uint stackSize; // Size of the stack, in bytes.
 
-  tcb_t *tcb; // Thread control block
+  tcb_t tcb; // Thread control block
 };
 
 // Process memory is laid out contiguously, low addresses first:

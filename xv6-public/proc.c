@@ -140,8 +140,13 @@ userinit(void)
   p->tf->esp = PGSIZE;
   p->tf->eip = 0;  // beginning of initcode.S
 
+  // Proj#2 fields~
   p->memorylimit = 0;
   p->stackSize = 1;
+
+  p->tcb.pgid = p->pid;
+  p->tcb.threadtype = T_MAIN;
+  // ~Proj#2 fields
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
@@ -204,9 +209,13 @@ fork(void)
   np->parent = curproc;
   *np->tf = *curproc->tf;
 
-
+  // proj#2 fields~
   np->memorylimit = curproc->memorylimit;
   np->stackSize = curproc->stackSize;
+
+  np->tcb.pgid = np->pid;
+  np->tcb.threadtype = T_MAIN;
+  // ~proj#2 fields
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
