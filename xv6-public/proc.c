@@ -754,6 +754,7 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
     *np->tf = *curproc->tf;
 
     //Project 2 추가
+    *thread = np->pid; // thread id
     np->tcb.pgid = curproc->tcb.pgid; // 부모와 같은 process group
     np->tcb.tid = np->pid; // subthread
     np->tcb.threadtype = T_THREAD; // sub thread
