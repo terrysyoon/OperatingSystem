@@ -739,11 +739,11 @@ void killHandler() {
 int
 sbrk(int n)
 {
-  cprintf("sbrk called!\n");
+  //cprintf("sbrk called!\n");
   int addr;
   addr = myproc()->sz;
   if(growproc_thread(n) < 0)
     return -1;
-  cprintf("done!\n");
+  //cprintf("done!\n");
   return addr;
 }
