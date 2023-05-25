@@ -10,6 +10,7 @@ static volatile int counter = 0;
 
 void *myThread(void *arg)
 {
+	sleep(100);
 	printf(1, "%s: begin counter: %d\n", (char *)arg, counter);
 	int i;
 
