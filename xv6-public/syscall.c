@@ -109,6 +109,11 @@ extern int sys_pmanagerList(void);
 extern int sys_exec2(void);
 extern int sys_procdump(void);
 
+
+extern int sys_thread_create(void);
+extern int sys_thread_join(void);
+extern int sys_thread_exit(void);
+
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
 [SYS_exit]    sys_exit,
@@ -136,6 +141,10 @@ static int (*syscalls[])(void) = {
 [SYS_pmanagerList] sys_pmanagerList,
 [SYS_exec2] sys_exec2,
 [SYS_procdump] sys_procdump,
+
+[SYS_thread_create] sys_thread_create,
+[SYS_thread_join] sys_thread_join,
+[SYS_thread_exit] sys_thread_exit,
 };
 
 void

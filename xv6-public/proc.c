@@ -614,3 +614,28 @@ pmanagerList(void) {
   }
   //release(&ptable.lock);
 }
+
+int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) { //fork 후 stack만 다시 할당. context는 start_routine으로 변경 필요(PC)
+  return 0;
+}
+
+void thread_exit(void *retval){
+  return;
+}
+
+int thread_join(thread_t thread, void **retval){
+  return 0;
+}
+
+//May 23rd
+
+// 기본적으로 kill과 동일하지만 newMain은 제외, threadtype의 변경 수반
+// 또한, 시간이 걸리더라도 thread 모두 종료된 것 까지 확인
+int
+exec_remove_thread(struct proc *newMain) {
+  return 0;
+}
+
+void killHandler() {
+  return;
+}
