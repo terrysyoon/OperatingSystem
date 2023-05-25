@@ -695,7 +695,7 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
     cprintf("thread_create: allocuvm() failed!\n");
     return -1;
   }
-  clearpteu(np->pgdir, (char*)(sz - PGSIZE*(np->stackSize + 1)));
+  //clearpteu(np->pgdir, (char*)(sz - PGSIZE*(np->stackSize + 1)));
   np->tcb.parentProc->sz = sz;
   sp = sz;
 
