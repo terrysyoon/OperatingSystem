@@ -22,7 +22,7 @@ void *myThread(void *arg)
 	printf(1, "%s: done\n", (char *)arg);
 	sleep(200);
 	thread_exit(NULL);
-	return NULL;
+	//return NULL;
 }
 
 int main()
