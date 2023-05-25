@@ -12,12 +12,14 @@ void *myThread(void *arg)
 {
 	printf(1, "%s: begin counter: %d\n", (char *)arg, counter);
 	int i;
+
 	//printf(1, "%s: i created\n", (char *)arg);
 	for (i = 0; i < 10000000; i++)
 	{
 		counter = counter + 1;
 	}
-	printf(1, "%s: done\n", (char *)arg);
+	//printf(1, "%s: done\n", (char *)arg);
+	thread_exit(NULL);
 	return NULL;
 }
 
@@ -47,11 +49,11 @@ int main()
 	// Wait for threads
 	printf(1, "p1 %d joined: %d\n",p1,thread_join(p1, NULL));
 	//printf(1, "join 1~ ");
-	thread_join(p2, NULL);
+	//thread_join(p2, NULL);
 	//printf(1, "2!\n ");	
 	// Done
 	printf(1, "p2 joined: %d\n",p2,thread_join(p2, NULL));
 	printf(1, "main: done with both (counter = %d)\n", counter);
-	return 0;
+	//return 0;
 	exit();
 }
