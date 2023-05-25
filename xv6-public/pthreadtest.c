@@ -27,6 +27,9 @@ void *myThread(void *arg)
 	}
 	//printf(1, "%s: done\n", (char *)arg);
 	thread_exit(NULL);
+
+
+	
 	return NULL;
 }
 

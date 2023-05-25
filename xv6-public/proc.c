@@ -698,8 +698,8 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
   *(uint*)(stack-4) = 0xfffffff0; // fake return PC
   *(uint*)(stack-8) = (uint)arg; // argument
 */
-  *(uint*)(stack-4) = (uint)arg;
-  *(uint*)(stack-8) = 0xffffffff;
+  *(uint*)(stack-8) = (uint)arg;
+  *(uint*)(stack-4) = 0xffffffff;
 
   // PC, SP 설정. 여기는 exec 참고해서 다시 하기
   np->tf->eip = (uint)start_routine;
