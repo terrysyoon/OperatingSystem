@@ -42,7 +42,7 @@ int main()
 	}
     */
 	thread_t p1;
-	thread_t p2; // thread identifiers.
+	//thread_t p2; // thread identifiers.
 	printf(1, "main: create");
 	thread_create(&p1, myThread, "A");
 	printf(1, " (p1 = %d)\n", p1);
