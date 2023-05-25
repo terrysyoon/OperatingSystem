@@ -20,6 +20,9 @@ extern void trapret(void);
 
 static void wakeup1(void *chan);
 
+int
+sbrk(int n);
+
 void
 pinit(void)
 {
@@ -131,6 +134,9 @@ userinit(void)
     panic("userinit: out of memory?");
   inituvm(p->pgdir, _binary_initcode_start, (int)_binary_initcode_size);
   p->sz = PGSIZE;
+  //proj2~
+  p->tcb.procsz = p->sz;
+  //~proj2
   memset(p->tf, 0, sizeof(*p->tf));
   p->tf->cs = (SEG_UCODE << 3) | DPL_USER;
   p->tf->ds = (SEG_UDATA << 3) | DPL_USER;
@@ -206,6 +212,9 @@ fork(void)
     return -1;
   }
   np->sz = curproc->sz;
+  // proj2~
+  np->tcb.procsz = np->sz;
+  // ~proj2
   np->parent = curproc;
   *np->tf = *curproc->tf;
 
@@ -616,6 +625,64 @@ pmanagerList(void) {
 }
 
 int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) { //fork 후 stack만 다시 할당. context는 start_routine으로 변경 필요(PC)
+  struct proc *curproc = myproc();
+  struct proc *np; 
+
+  int i;
+  void* stack;
+
+  if((np = allocproc()) == 0) {
+    cprintf("thread_create: allocproc() failed!\n");
+    return -1;
+  }
+
+  np->pgdir = curproc->pgdir;
+  // malloc 대신에 sbrk 사용!!
+  np->tcb.stackEndAddress = curproc->tcb.procsz; //stack grows down
+  np->tcb.stackBeginAddress = sbrk(PGSIZE * (curproc->stackSize + 1)); //procsz 뒤에 붙이기. 하나는 guard
+  //가드페이지 설정
+  clearpteu(np->pgdir, (char*)(curproc->sz - (curproc->stackSize)*PGSIZE));
+
+  stack = (void*)np->tcb.stackBeginAddress;
+  if((uint)stack % PGSIZE) { 
+      cprintf("thread_create: Stack not aligned!\n");
+      // 정상적인 상황이라면 여기 올 일이 없다.
+  }
+
+  np->tcb.procsz = curproc->tcb.procsz;
+  np->parent = curproc;
+  *np->tf = *curproc->tf;
+
+  //Project 2 추가
+  *thread = np->pid; // thread id
+  np->tcb.pgid = curproc->tcb.pgid; // 부모와 같은 process group
+  np->tcb.threadtype = T_THREAD; // sub thread
+  np->memorylimit = curproc->memorylimit; // setmemorylimit하면 같은 pgid인 thread 모두 갱신하게 해야겠네
+  np->stackSize = curproc->stackSize;
+
+  // Clear %eax so that fork returns 0 in the child.
+  np->tf->eax = 0;
+
+  *(uint*)(stack-8) = 0xffffffff; // fake return PC
+  *(uint*)(stack-4) = (uint)arg; // argument
+  // PC, SP 설정. 여기는 exec 참고해서 다시 하기
+  np->tf->eip = (uint)start_routine;
+  np->tf->esp = (uint)(stack - 8); // argument가 하나인 경우에만 대응하나?
+
+  for(i = 0; i < NOFILE; i++)
+    if(curproc->ofile[i])
+      np->ofile[i] = filedup(curproc->ofile[i]); // file reference count 올리고 parameter 그대로 반환
+  np->cwd = idup(curproc->cwd); // 마찬가지로 reference 올리기
+
+  safestrcpy(np->name, curproc->name, sizeof(curproc->name));
+
+  *thread = np->pid; // thread id 반환
+
+  acquire(&ptable.lock);
+
+  np->state = RUNNABLE;
+
+  release(&ptable.lock);
   return 0;
 }
 
@@ -638,4 +705,15 @@ exec_remove_thread(struct proc *newMain) {
 
 void killHandler() {
   return;
+}
+
+// replica of sys_sbrk
+int
+sbrk(int n)
+{
+  int addr;
+  addr = myproc()->sz;
+  if(growproc(n) < 0)
+    return -1;
+  return addr;
 }
