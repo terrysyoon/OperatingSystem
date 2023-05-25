@@ -20,8 +20,7 @@ extern void trapret(void);
 
 static void wakeup1(void *chan);
 
-int
-sbrk(int n);
+//int sbrk(int n);
 
 void
 pinit(void)
@@ -775,6 +774,7 @@ void killHandler() {
 }
 
 // replica of sys_sbrk
+/*
 int
 sbrk(int n)
 {
@@ -786,4 +786,4 @@ sbrk(int n)
   //cprintf("done!\n");
   addr = myproc()->sz;
   return addr;
-}
+}*/
