@@ -673,7 +673,7 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
   cprintf("stackEndAddress: %d\n", np->tcb.stackEndAddress);
 
   //가드페이지 설정
-  clearpteu(np->pgdir, (char*)(curproc->sz - (curproc->stackSize)*PGSIZE));
+  //clearpteu(np->pgdir, (char*)(curproc->sz - (curproc->stackSize)*PGSIZE));
 
   stack = (void*)np->tcb.stackBeginAddress;
   if((uint)stack % PGSIZE) { 
