@@ -668,6 +668,10 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
   // malloc 대신에 sbrk 사용!!
   np->tcb.stackEndAddress = curproc->tcb.procsz; //stack grows down
   np->tcb.stackBeginAddress = sbrk(PGSIZE * (curproc->stackSize + 1)); //procsz 뒤에 붙이기. 하나는 guard
+
+  printf("stackBeginAddress: %d\n", np->tcb.stackBeginAddress);
+  printf("stackEndAddress: %d\n", np->tcb.stackEndAddress);
+
   //가드페이지 설정
   clearpteu(np->pgdir, (char*)(curproc->sz - (curproc->stackSize)*PGSIZE));
 
