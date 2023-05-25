@@ -24,10 +24,10 @@ void *myThread(void *arg)
 			printf(1, "%s: i: %d\n", (char *)arg, i);
 			//sleep(100);
 		}*/
-	}
+	}/*
 	while(1) {
 
-	}
+	}*/
 	//printf(1, "%s: done\n", (char *)arg);
 	thread_exit(NULL);
 
@@ -64,10 +64,11 @@ int main()
 	thread_create(&p2, myThread, "B");
 	printf(1, " (p2 = %d)\n", p2);
 */
+/*
 	// Wait for threads
 	while(1) {
 
-	}
+	}*/
 	//printf(1, "p1 %d joined: %d\n",p1,thread_join(p1, NULL));
 //	printf(1, "p2 %d joined: %d\n",p2,thread_join(p2, NULL));
     // Done
