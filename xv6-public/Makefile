@@ -188,6 +188,7 @@ UPROGS=\
 	_thread_exit\
 	_thread_kill\
 	_thread_test\
+	_pthreadtest\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -267,6 +268,7 @@ EXTRA=\
 	thread_exit.c\
 	thread_kill.c\
 	thread_test.c\
+	pthreadtest.c\
 
 dist:
 	rm -rf dist

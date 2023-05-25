@@ -202,3 +202,4 @@ int thread_join(thread_t thread, void **retval); // in proc.c
 
 int exec_remove_thread(struct proc *newMain); //in proc.c
 void killHandler(void); //in proc.c, meant to be used in trap.c when a process is killed
+int growproc_thread(int);

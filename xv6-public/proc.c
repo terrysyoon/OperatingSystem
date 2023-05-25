@@ -189,6 +189,32 @@ growproc(int n)
   return 0;
 }
 
+int
+growproc_thread(int n)
+{
+  uint sz;
+  struct proc *curproc = myproc();
+
+  sz = curproc->tcb.procsz;
+  if(n > 0){
+    if((sz = allocuvm(curproc->pgdir, sz, sz + n)) == 0)
+      return -1;
+  } else if(n < 0){
+    if((sz = deallocuvm(curproc->pgdir, sz, sz + n)) == 0)
+      return -1;
+  }
+  curproc->tcb.procsz = sz;
+
+  struct proc *p;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->tcb.pgid == curproc->tcb.pgid){
+      p->tcb.procsz = sz;
+    }
+  }
+  switchuvm(curproc);
+  return 0;
+}
+
 // Create a new process copying p as the parent.
 // Sets up stack to return as if from system call.
 // Caller must set state of returned proc to RUNNABLE.
@@ -713,7 +739,7 @@ sbrk(int n)
 {
   int addr;
   addr = myproc()->sz;
-  if(growproc(n) < 0)
+  if(growproc_thread(n) < 0)
     return -1;
   return addr;
 }
