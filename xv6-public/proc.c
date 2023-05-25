@@ -691,8 +691,8 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
 
-  *(uint*)(stack-8) = 0xffffffff; // fake return PC
-  *(uint*)(stack-4) = (uint)arg; // argument
+  *(uint*)(stack-4) = 0xffffffff; // fake return PC
+  *(uint*)(stack-8) = (uint)arg; // argument
   // PC, SP 설정. 여기는 exec 참고해서 다시 하기
   np->tf->eip = (uint)start_routine;
   np->tf->esp = (uint)(stack - 8); // argument가 하나인 경우에만 대응하나?
