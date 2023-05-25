@@ -140,6 +140,9 @@ userinit(void)
   p->tf->esp = PGSIZE;
   p->tf->eip = 0;  // beginning of initcode.S
 
+  p->memorylimit = 0;
+  p->stackSize = 1;
+
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
 
@@ -203,6 +206,7 @@ fork(void)
 
 
   np->memorylimit = curproc->memorylimit;
+  np->stackSize = curproc->stackSize;
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
