@@ -254,6 +254,7 @@ fork(void)
   // ~ thread 복제
 */
 
+/*
   //Project 2 추가
   np->tid = np->pid; // main thread의 tid는 pid와 같다.
   np->tcb.pgid = np->pid; // 새 process group 만들기
@@ -263,7 +264,7 @@ fork(void)
   np->stackBeginAddress = curproc->stackBeginAddress; // 이 두줄 꼭 필요함!
   np->stackEndAddress = curproc->stackEndAddress;
   np->stackSize = curproc->stackSize;
-
+*/
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
