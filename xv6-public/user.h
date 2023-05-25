@@ -1,3 +1,5 @@
+#include "pthread.h"
+
 struct stat;
 struct rtcdate;
 
