@@ -24,8 +24,9 @@ void *myThread(void *arg)
 		}
 	}
 	printf(1, "%s: done\n", (char *)arg);
-	sleep(987654321);
-	thread_exit(NULL);
+	while(1) {
+		
+	}
 	return NULL;
 }
 
