@@ -697,7 +697,7 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
     return -1;
   }
   cprintf("%d\n",sz);
-  //clearpteu(np->pgdir, (char*)(sz - PGSIZE*(np->stackSize + 1)));
+  clearpteu(np->pgdir, (char*)(sz - PGSIZE*(np->stackSize + 1)));
   np->tcb.parentProc->sz = sz;
   sp = sz;
 
