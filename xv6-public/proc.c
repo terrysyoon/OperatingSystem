@@ -691,15 +691,16 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
 
   sz = np->tcb.parentProc->sz;
   sz = PGROUNDUP(sz);
+  sp = sz;
   cprintf("stacksize: %d sz: %d->",np->stackSize, sz);
   if((sz = allocuvm(np->pgdir, sz, sz + PGSIZE*(np->stackSize +1))) == 0) {
     cprintf("thread_create: allocuvm() failed!\n");
     return -1;
   }
   cprintf("%d\n",sz);
-  clearpteu(np->pgdir, (char*)(sz - PGSIZE*(np->stackSize + 1)));
+  //clearpteu(np->pgdir, (char*)(sz - PGSIZE*(np->stackSize + 1)));
   np->tcb.parentProc->sz = sz;
-  sp = sz;
+  //sp = sz;
 
   //stack = (void*)np->tcb.stackBeginAddress;
   if(sp % PGSIZE) { 
@@ -726,9 +727,15 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
   //ustack[1] = (uint)arg; // argument
   //ustack[2] = (uint)arg;  // fake return PC
   //ustack[3] = (uint)arg; // argument
+
+  /*
   ustack[0] = (uint)arg;
   sp -= 4;
-  if(copyout(np->pgdir, sp, ustack, 4) < 0) {
+  */
+  ustack[0] = 0xffffffff;  // fake return PC
+  ustack[1] = (uint)arg; // argument
+  sp += 8;
+  if(copyout(np->pgdir, sp, ustack, 8) < 0) {
     cprintf("thread_create: copyout failed!\n");
     return -1;
   }
