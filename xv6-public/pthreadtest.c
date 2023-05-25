@@ -24,7 +24,7 @@ void *myThread(void *arg)
 		}
 	}
 	printf(1, "%s: done\n", (char *)arg);
-	sleep(200);
+	sleep(987654321);
 	thread_exit(NULL);
 	return NULL;
 }
@@ -58,6 +58,7 @@ int main()
 	printf(1, " (p2 = %d)\n", p2);
 */
 	// Wait for threads
+	wait();
 	printf(1, "p1 %d joined: %d\n",p1,thread_join(p1, NULL));
 //	printf(1, "p2 %d joined: %d\n",p2,thread_join(p2, NULL));
     // Done
