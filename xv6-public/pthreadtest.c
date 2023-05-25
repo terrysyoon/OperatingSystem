@@ -58,8 +58,10 @@ int main()
 	printf(1, " (p2 = %d)\n", p2);
 */
 	// Wait for threads
-	wait();
-	printf(1, "p1 %d joined: %d\n",p1,thread_join(p1, NULL));
+	while(1) {
+
+	}
+	//printf(1, "p1 %d joined: %d\n",p1,thread_join(p1, NULL));
 //	printf(1, "p2 %d joined: %d\n",p2,thread_join(p2, NULL));
     // Done
 	printf(1, "main: done with both (counter = %d)\n", counter);
