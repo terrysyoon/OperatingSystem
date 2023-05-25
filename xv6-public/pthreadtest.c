@@ -18,6 +18,7 @@ void *myThread(void *arg)
 	for (i = 0; i < 10000000; i++)
 	{
 		counter = counter + 1;
+		if(i % 1000 == 0) printf(1, "%s: counter = %d\n", (char *)arg, counter);
 	}
 	//printf(1, "%s: done\n", (char *)arg);
 	thread_exit(NULL);
@@ -58,7 +59,7 @@ int main()
 	//printf(1, "2!\n ");	
 	// Done
 	
-	printf(1, "p2 joined: %d\n",p2,thread_join(p2, NULL));
+	printf(1, "p2 %d joined: %d\n",p2,thread_join(p2, NULL));
 	
 	printf(1, "main: done with both (counter = %d)\n", counter);
 	//return 0;
