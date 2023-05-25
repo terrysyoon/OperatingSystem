@@ -204,11 +204,13 @@ growproc_thread(int n)
       return -1;
   }
   curproc->tcb.procsz = sz;
+  curproc->sz = sz;
 
   struct proc *p;
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->tcb.pgid == curproc->tcb.pgid){
       p->tcb.procsz = sz;
+      p->sz = sz;
     }
   }
   switchuvm(curproc);
