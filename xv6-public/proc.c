@@ -727,6 +727,7 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
   }
 
   // PC, SP 설정. 여기는 exec 참고해서 다시 하기
+  cprintf("routine: %d\n", (uint)start_routine);
   np->tf->eip = (uint)start_routine;
   np->tf->esp = sp; 
 
