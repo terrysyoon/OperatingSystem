@@ -726,7 +726,9 @@ void thread_exit(void *retval){
   struct proc *curproc = myproc();
   acquire(&ptable.lock);
   curproc->state = ZOMBIE;
-  release(&ptable.lock);
+  //release(&ptable.lock);
+  sched();
+  panic("zombie exit");
   return;
 }
 

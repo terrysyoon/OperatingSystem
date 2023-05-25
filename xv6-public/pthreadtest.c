@@ -11,22 +11,21 @@ static volatile int counter = 0;
 void *myThread(void *arg)
 {
 	//sleep(100);
-	printf(1, "%s: begin counter: %d\n", (char *)arg, counter);
+	//printf(1, "%s: begin counter: %d\n", (char *)arg, counter);
 	int i;
 
 	//printf(1, "%s: i created\n", (char *)arg);
 	for (i = 0; i < 10000; i++)
 	{
 		counter = counter + 1;
+		/*
 		if(i % 1000==0){
 			printf(1, "%s: i: %d\n", (char *)arg, i);
 			//sleep(100);
-		}
+		}*/
 	}
-	printf(1, "%s: done\n", (char *)arg);
-	while(1) {
-		
-	}
+	//printf(1, "%s: done\n", (char *)arg);
+	thread_exit(NULL);
 	return NULL;
 }
 
