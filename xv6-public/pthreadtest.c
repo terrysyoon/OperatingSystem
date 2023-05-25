@@ -18,11 +18,12 @@ void *myThread(void *arg)
 	for (i = 0; i < 10000000; i++)
 	{
 		counter = counter + 1;
+		if(i % 1000==0)printf(1, "%s: i: %d\n", (char *)arg, i);
 	}
 	printf(1, "%s: done\n", (char *)arg);
 	sleep(200);
 	thread_exit(NULL);
-	//return NULL;
+	return NULL;
 }
 
 int main()
