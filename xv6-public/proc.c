@@ -746,9 +746,10 @@ sbrk(int n)
 {
   //cprintf("sbrk called!\n");
   int addr;
-  addr = myproc()->sz;
+
   if(growproc_thread(n) < 0)
     return -1;
   //cprintf("done!\n");
+  addr = myproc()->sz;
   return addr;
 }
