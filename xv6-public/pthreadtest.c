@@ -17,8 +17,12 @@ void *myThread(void *arg)
 	int a;
 	if(*((char*)arg) == 'A') {
 		a = 20000;
-	} else {
-		a = 10000;
+	} else if(*((char*)arg) == 'B'){
+		a = 5000;
+	}
+	else {
+		a = 1;
+		
 	}
 	//printf(1, "%s: i created\n", (char *)arg);
 	for (i = 0; i < a; i++)
@@ -62,15 +66,15 @@ int main()
 	}
     */
 	thread_t p1;
-	//thread_t p2; // thread identifiers.
+	thread_t p2; // thread identifiers.
 	printf(1, "main: create");
 	thread_create(&p1, myThread, "A");
 	printf(1, " (p1 = %d)\n", p1);
-/*
+
 	printf(1, "main: create");
 	thread_create(&p2, myThread, "B");
 	printf(1, " (p2 = %d)\n", p2);
-*/
+
 /*
 	// Wait for threads
 	while(1) {
