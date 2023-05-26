@@ -946,7 +946,7 @@ exec_remove_thread(struct proc *curproc) {
       if(p->tcb.threadtype == T_THREAD) {
         cnt++;
         kill(p->pid);
-        thread_join(p->pid, 0);
+        thread_join(p->pid, 0); // thread join 때 원활히 동작하기 위해서는 cpu가 curproc으로 context switch 되어야 하는데..
       }
     }
   }
@@ -964,6 +964,16 @@ void killHandler() {
     panic("killHandler> not a thread or main");
   }
   return;
+}
+
+int lockPtable() {
+  acquire(&ptable.lock);
+  return 0;
+}
+
+int unlockPtable() {
+  release(&ptable.lock);
+  return 0;
 }
 
 // replica of sys_sbrk
