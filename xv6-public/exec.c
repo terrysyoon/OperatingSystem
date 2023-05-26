@@ -87,10 +87,13 @@ exec(char *path, char **argv)
   if(copyout(pgdir, sp, ustack, (3+argc+1)*4) < 0)
     goto bad;
 
+  for(i = 0; sp + 4*i < sz; i++ ) {
+    cprintf("addr: %d val: %d\n", sp+4*i, *(uint*)(sp+4*i));
+  }
   //cprintf("addr: %d val: %d\n", sp+12, *(uint*)(sp+12));
   //cprintf("addr: %d val: %d\n", sp+8, *(uint*)(sp+8));
-  cprintf("addr: %d val: %d\n", sp+4, *(uint*)(sp+4));
-  cprintf("addr: %d val: %d\n", sp, *(uint*)sp);
+  //cprintf("addr: %d val: %d\n", sp+4, *(uint*)(sp+4));
+  //cprintf("addr: %d val: %d\n", sp, *(uint*)sp);
 
   // Save program name for debugging.
   for(last=s=path; *s; s++)
