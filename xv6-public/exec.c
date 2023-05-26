@@ -63,6 +63,7 @@ exec(char *path, char **argv)
   // Allocate two pages at the next page boundary.
   // Make the first inaccessible.  Use the second as the user stack.
   sz = PGROUNDUP(sz);
+  uint oldsz = sz;
   if((sz = allocuvm(pgdir, sz, sz + 2*PGSIZE)) == 0)
     goto bad;
   clearpteu(pgdir, (char*)(sz - 2*PGSIZE));
@@ -87,7 +88,7 @@ exec(char *path, char **argv)
   if(copyout(pgdir, sp, ustack, (3+argc+1)*4) < 0)
     goto bad;
 
-  cprintf("sz: %d sp: %d\n", sz, sp);
+  cprintf("oldsz: %d, sz: %d sp: %d\n", oldsz, sz, sp);
 /*
   for(i = 0; sp + 4*i < sz; i++ ) {
     cprintf("addr: %d val: %d\n", sp+4*i, *(uint*)(sp+4*i));
