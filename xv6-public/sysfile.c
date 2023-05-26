@@ -428,11 +428,11 @@ sys_exec(void)
     p->state = SLEEPING;
     switchuvm(p->tcb.parentProc);
     p->tcb.parentProc->state = RUNNING;
-
+    unlockPtable();
     swtch(&(c->scheduler), p->tcb.parentProc->context);
     //c->proc = p;
     //switchuvm(p);
-    unlockPtable();
+    //unlockPtable();
   }
 
   return exec(path, argv);
