@@ -4,8 +4,6 @@
 
 #define NUM_THREAD 5
 
-#define NULL ((void*)0)
-
 void *thread_main(void *arg)
 {
   int val = (int)arg;
@@ -13,14 +11,14 @@ void *thread_main(void *arg)
   if (arg == 0) {
     sleep(100);
     printf(1, "Exiting...\n");
-    thread_exit(NULL);
+    exit();
   }
   else {
     sleep(200);
   }
   
   printf(1, "This code shouldn't be executed!!\n");
-  thread_exit(NULL);
+  exit();
   return 0;
 }
 

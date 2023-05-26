@@ -282,7 +282,7 @@ fork(void)
 void
 exit(void)
 {
-  struct proc *curproc = myproc();
+  struct proc *curproc = myproc()->tcb.parentProc;
   struct proc *p;
   int fd;
 
