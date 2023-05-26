@@ -291,7 +291,7 @@ exit(void)
 
   //proj2~
   if(curproc->tcb.threadtype == T_THREAD){
-    kill(curproc->tcb.parentProc->pid);
+    cprintf("kill: %d\n",kill(curproc->tcb.parentProc->pid));
     /*
     acquire(&ptable.lock);
     curproc->state = ZOMBIE;
