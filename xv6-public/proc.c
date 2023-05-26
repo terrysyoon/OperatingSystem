@@ -734,11 +734,14 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
   */
   ustack[0] = 0xffffffff;  // fake return PC
   ustack[1] = (uint)arg; // argument
-  sp -= 12;
-  if(copyout(np->pgdir, sp, ustack, 12) < 0) {
+  sp -= 8;
+  if(copyout(np->pgdir, sp, ustack, 8) < 0) {
     cprintf("thread_create: copyout failed!\n");
     return -1;
   }
+  cprintf("addr: %d val: %d\n", sp+4, *(uint*)(sp+4));
+  cprintf("addr: %d val: %d\n", sp, *(uint*)sp);
+
 
   // PC, SP 설정. 여기는 exec 참고해서 다시 하기
   cprintf("routine: %d\n", (uint)start_routine);
