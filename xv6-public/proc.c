@@ -767,7 +767,46 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
 
 void thread_exit(void *retval){
   struct proc *curproc = myproc();
+  struct proc *p;
+  //int fd;
+
+  if(curproc->tcb.threadtype == T_MAIN) {
+    // exit();
+    printf("thread_exit>  pid: %d Mainthread cannot exit\n");
+  }
+/*
+  // Close all open files.
+  for(fd = 0; fd < NOFILE; fd++){
+    if(curproc->ofile[fd]){
+      fileclose(curproc->ofile[fd]);
+      curproc->ofile[fd] = 0;
+    }
+  }
+
+  begin_op();
+  iput(curproc->cwd);
+  end_op();
+  curproc->cwd = 0;
+*/
   acquire(&ptable.lock);
+
+  p->tcb.retval = retval;
+
+  // 이 thread를 위해 thread_create한 아이.
+  wakeup1(curproc->parent);
+
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->parent == curproc){
+      /*
+      p->parent = initproc;
+      if(p->state == ZOMBIE)
+        wakeup1(initproc);
+      */
+     cprintf("thread_exit> thread %d exiting, but there are still child thread pid: %d\n", curproc->pid, p->pid);
+     panic("thread_exit> Orphan thread");
+    }
+  }
+
   curproc->state = ZOMBIE;
   //release(&ptable.lock);
   sched();
@@ -775,8 +814,58 @@ void thread_exit(void *retval){
   return;
 }
 
+/// wait과 비슷하게
 int thread_join(thread_t thread, void **retval){
-  wait();
+  struct proc *p;
+  int haveThread;
+  struct proc *curproc = myproc();
+
+  acquire(&ptable.lock);
+  for(;;) {
+    haveThread = 0;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+      if(p->pid != thread)
+        continue;
+      if(p->tcb.threadtype != T_THREAD) {
+        cprintf("thread_join> pid: %d is not a thread\n", thread);
+        release(&ptable.lock);
+        return -1;
+      }
+      if(p->tcb.parentProc != curproc) {
+        cprintf("thread_join> pid: %d is not a child of pid: %d\n", thread, curproc->pid);
+        release(&ptable.lock);
+        return -1;
+      }
+      haveThread = 1;
+      if(p->state == ZOMBIE) {
+        *retval = p->tcb.retval;
+        kfree(p->kstack);
+        p->kstack = 0;
+        //pgdir는 할당해제 금지
+        p->pid = 0;
+        p->parent = 0;
+        p->name[0] = 0;
+        p->killed = 0;
+        p->state = UNUSED;
+
+        p->memorylimit = 0;
+        p->stackSize = 1;
+        p->tcb.pgid = 0;
+        p->tcb.threadtype = T_MAIN;
+        p->tcb.parentProc = 0;
+        p->tcb.retval = 0;
+        release(&ptable.lock);
+        return 0;
+      }
+    }
+    if(!haveThread || curproc->killed) {
+      cprintf("thread_join> pid: %d does not exist\n", thread);
+      release(&ptable.lock);
+      return -1;
+    }
+
+    sleep(curproc, &ptable.lock);
+  }
   return 0;
 }
 

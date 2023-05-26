@@ -38,14 +38,10 @@ void *myThread(void *arg)
 
 	}*/
 	//printf(1, "%s: done\n", (char *)arg);
-	//thread_exit(NULL);
-
-
-	while(1) {
-
-	}
+	thread_exit(((void*)&i));
+	
 	return NULL;
-}
+} 
 
 int main()
 {
@@ -80,15 +76,20 @@ int main()
 	while(1) {
 
 	}*/
-	//printf(1, "p1 %d joined: %d\n",p1,thread_join(p1, NULL));
-//	printf(1, "p2 %d joined: %d\n",p2,thread_join(p2, NULL));
+	void *retval1;
+	void *retval2;
+	printf(1, "p1 %d joined: %d retval: %d\n",p1,thread_join(p1, &retval1), *((int*)retval1));
+	printf(1, "p2 %d joined: %d\n retval: %d\n",p2,thread_join(p2, &retval2), *((int*)retval2));
     // Done
 	/*while(1) {
 		
 	}*/
 
+
 	sleep(1000);
 	printf(1, "main: done with both (counter = %d)\n", counter);
-
+	while(1) {
+		
+	} 
 	exit();
 }
