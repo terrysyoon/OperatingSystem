@@ -772,7 +772,7 @@ void thread_exit(void *retval){
 
   if(curproc->tcb.threadtype == T_MAIN) {
     // exit();
-    printf("thread_exit>  pid: %d Mainthread cannot exit\n");
+    cprintf("thread_exit>  pid: %d Mainthread cannot exit\n");
   }
 /*
   // Close all open files.
@@ -790,7 +790,7 @@ void thread_exit(void *retval){
 */
   acquire(&ptable.lock);
 
-  p->tcb.retval = retval;
+  curproc->tcb.retval = retval;
 
   // 이 thread를 위해 thread_create한 아이.
   wakeup1(curproc->parent);
