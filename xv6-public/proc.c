@@ -329,6 +329,7 @@ exit(void)
         release(&ptable.lock);
         kill(p->pid); //not kill_parentProc!
         thread_join(p->pid, 0);
+        acquire(&ptable.lock);
       }
       else{
         panic("exit: threadtype error");
