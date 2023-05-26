@@ -290,10 +290,26 @@ exit(void)
     panic("init exiting");
 
   if(curproc->tcb.threadtype == T_THREAD){
-    kill(curproc->tcb.parentProc->pid);
+    //kill(curproc->tcb.parentProc->pid);
     //return; exit은 return 하면 안되지
     acquire(&ptable.lock);
+    // kill parent process
+    curproc->tcb.parentProc->killed = 2;
+    if(curproc->tcb.parentProc->state == SLEEPING)
+      curproc->tcb.parentProc->state = RUNNABLE;
     curproc->state = SLEEPING;
+    //
+    /*
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->pid == pid){
+        p->killed = 1;
+        // Wake process from sleep if necessary.
+        if(p->state == SLEEPING)
+          p->state = RUNNABLE;
+        release(&ptable.lock);
+        return 0\
+      }
+    }*/
     sched();
     release(&ptable.lock);
   }
@@ -906,7 +922,7 @@ int thread_join(thread_t thread, void **retval){
         return 0;
       }
     }
-    if(!haveThread || curproc->killed) {
+    if(!haveThread || curproc->killed == 1) {
       cprintf("thread_join> pid: %d does not exist\n", thread);
       release(&ptable.lock);
       cprintf("thread_join> released lock\n", thread);
