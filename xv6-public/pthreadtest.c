@@ -32,7 +32,9 @@ void *myThread(void *arg)
 	//thread_exit(NULL);
 
 
+	while(1) {
 
+	}
 	return NULL;
 }
 
@@ -75,6 +77,8 @@ int main()
 	/*while(1) {
 		
 	}*/
+
+	sleep(1000);
 	printf(1, "main: done with both (counter = %d)\n", counter);
 
 	exit();
