@@ -430,8 +430,8 @@ sys_exec(void)
     p->tcb.parentProc->state = RUNNING;
 
     swtch(&(c->scheduler), p->tcb.parentProc->context);
-    c->proc = p;
-    switchuvm(p);
+    //c->proc = p;
+    //switchuvm(p);
     unlockPtable();
   }
 

@@ -937,9 +937,28 @@ int thread_join(thread_t thread, void **retval){
 //May 23rd
 
 // 기본적으로 kill과 동일하지만 newMain
+/*
 int
 exec_remove_thread(struct proc *curproc) {
   struct proc *p;
+  int cnt = 0;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if(p->parent == curproc) {
+      if(p->tcb.threadtype == T_THREAD) {
+        cnt++;
+        kill(p->pid);
+        thread_join(p->pid, 0); // thread join 때 원활히 동작하기 위해서는 cpu가 curproc으로 context switch 되어야 하는데..
+      }
+    }
+  }
+  return cnt;
+}
+*/
+
+int
+exec_remove_thread() {
+  struct proc *p;
+  struct proc *curproc = myproc();
   int cnt = 0;
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
     if(p->parent == curproc) {
