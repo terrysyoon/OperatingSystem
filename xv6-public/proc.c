@@ -700,6 +700,7 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
   cprintf("%d\n",sz);
   //clearpteu(np->pgdir, (char*)(sz - PGSIZE*(np->stackSize + 1)));
   np->tcb.parentProc->sz = sz;
+  np->sz = sz; // May26th 2:33PM 이걸 빼먹노...
   sp = sz;
 
   //stack = (void*)np->tcb.stackBeginAddress;
