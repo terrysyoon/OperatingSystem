@@ -189,14 +189,14 @@ growproc(int n)
   return 0;
 }
 
-/*
+
 int
 growproc_thread(int n)
 {
   uint sz;
   struct proc *curproc = myproc();
 
-  sz = curproc->tcb.procsz;
+  sz = curproc->tcb.parentProc->sz;
   if(n > 0){
     if((sz = allocuvm(curproc->pgdir, sz, sz + n)) == 0)
       return -1;
@@ -204,19 +204,18 @@ growproc_thread(int n)
     if((sz = deallocuvm(curproc->pgdir, sz, sz + n)) == 0)
       return -1;
   }
-  curproc->tcb.procsz = sz;
+  curproc->tcb.parentProc->sz = sz;
   curproc->sz = sz;
 
   struct proc *p;
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->tcb.pgid == curproc->tcb.pgid){
-      p->tcb.procsz = sz;
       p->sz = sz;
     }
   }
   switchuvm(curproc);
   return 0;
-}*/
+}
 
 // Create a new process copying p as the parent.
 // Sets up stack to return as if from system call.
