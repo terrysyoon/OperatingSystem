@@ -416,6 +416,19 @@ sys_exec(void)
     if(fetchstr(uarg, &argv[i]) < 0)
       return -1;
   }
+
+  struct cpu *c = mycpu();
+  struct proc *p = myproc();
+
+  if(p->tcb.threadtype == T_THREAD) {
+    
+    c->proc = p->tcb.parentProc;
+    p->state = SLEEPING;
+    switchuvm(p->tcb.parentProc);
+    p->tcb.parentProc->state = RUNNING;
+    swtch(&(c->scheduler), p->tcb.parentProc->context);
+  }
+
   return exec(path, argv);
 }
 
