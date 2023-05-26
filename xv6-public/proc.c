@@ -292,8 +292,12 @@ exit(void)
   //proj2~
   if(curproc->tcb.threadtype == T_THREAD){
     kill(curproc->tcb.parentProc->pid);
+    /*
     acquire(&ptable.lock);
+    curproc->state = ZOMBIE;
     sched();
+    */
+    yield();
     panic("thread exit failed");
   }
   //~proj2
