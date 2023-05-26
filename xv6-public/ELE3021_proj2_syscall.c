@@ -41,11 +41,11 @@ int sys_thread_create(void) {
 
 int sys_thread_exit(void) {
     void *retval;
-    cprintf("sys_thread_exit\n");
+    //cprintf("sys_thread_exit\n");
     if(argptr(0, ((char**)&retval), sizeof(*retval)) < 0) {
       cprintf("parse param error\n");
     }
-    cprintf("parsed param\n");
+    //cprintf("parsed param\n");
     thread_exit(retval);
 
     return 1;

@@ -771,7 +771,7 @@ void thread_exit(void *retval){
   struct proc *p;
   //int fd;
 
-  cprintf("thread_exit>  pid: %d retval: %p\n",curproc->pid, retval);
+  //cprintf("thread_exit>  pid: %d retval: %p\n",curproc->pid, retval);
 
   if(curproc->tcb.threadtype == T_MAIN) {
     // exit();
@@ -812,7 +812,7 @@ void thread_exit(void *retval){
 
   curproc->state = ZOMBIE;
   //release(&ptable.lock);
-  cprintf("calling sched\n");
+  //cprintf("calling sched\n");
   sched();
   panic("zombie exit");
   return;

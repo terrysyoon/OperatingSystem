@@ -59,15 +59,6 @@ int main()
 	printf(1, "retval1: %p *retval: %d\n", retval1, *((int*)retval1));
 	printf(1, "retval2: %p *retval: %d\n", retval2, *((int*)retval2));	
     // Done
-	/*while(1) {
-		
-	}*/
-
-
-	//sleep(1000);
 	printf(1, "main: done with both (counter = %d)\n", counter);
-	/*while(1) {
-
-	} */
 	exit();
 }
