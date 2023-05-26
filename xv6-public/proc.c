@@ -771,7 +771,7 @@ void thread_exit(void *retval){
   struct proc *p;
   //int fd;
 
-  cprintf("thread_exit>  pid: %d\n",curproc->pid);
+  cprintf("thread_exit>  pid: %d retval: %p\n",curproc->pid, retval);
 
   if(curproc->tcb.threadtype == T_MAIN) {
     // exit();
