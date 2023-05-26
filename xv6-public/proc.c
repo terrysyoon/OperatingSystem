@@ -291,13 +291,8 @@ exit(void)
 
   //proj2~
   if(curproc->tcb.threadtype == T_THREAD){
-    cprintf("kill: %d\n",kill(curproc->tcb.parentProc->pid));
-    /*
-    acquire(&ptable.lock);
-    curproc->state = ZOMBIE;
-    sched();
-    */
-    yield();
+    kill(curproc->tcb.parentProc->pid);
+    thread_exit(0);
     panic("thread exit failed");
   }
   //~proj2
@@ -558,19 +553,26 @@ int
 kill(int pid)
 {
   struct proc *p;
+  
+  int hadPtableLock = 1;
+  if(!holding(&ptable.lock)) {
+    acquire(&ptable.lock);
+    hadPtableLock = 0;
+  }
 
-  acquire(&ptable.lock);
+
+  //acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->pid == pid){
       p->killed = 1;
       // Wake process from sleep if necessary.
       if(p->state == SLEEPING)
         p->state = RUNNABLE;
-      release(&ptable.lock);
+      if(hadPtableLock == 0) release(&ptable.lock);
       return 0;
     }
   }
-  release(&ptable.lock);
+  if(hadPtableLock == 0) release(&ptable.lock);
   return -1;
 }
 
@@ -845,8 +847,9 @@ void thread_exit(void *retval){
       }
       else if(p->tcb.threadtype == T_THREAD){
         //void *dummyRetval;
-        kill(p->pid); //not kill_parentProc!
-        thread_join(p->pid, 0);
+        //위에서 락을 잡고 시작했는데
+        kill(p->pid); //not kill_parentProc! //여기서도 락을 잡고
+        thread_join(p->pid, 0); //여기서도 락을 잡고
       }
       else{
         panic("thread_exit: threadtype error");
@@ -868,7 +871,14 @@ int thread_join(thread_t thread, void **retval){
   int haveThread;
   struct proc *curproc = myproc();
 
-  acquire(&ptable.lock);
+
+  int hadPtableLock = 1;
+  if(!holding(&ptable.lock)) {
+    acquire(&ptable.lock);
+    hadPtableLock = 0;
+  }
+
+  //acquire(&ptable.lock);
   for(;;) {
     haveThread = 0;
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
@@ -876,12 +886,12 @@ int thread_join(thread_t thread, void **retval){
         continue;
       if(p->tcb.threadtype != T_THREAD) {
         cprintf("thread_join> pid: %d is not a thread\n", thread);
-        release(&ptable.lock);
+        if(hadPtableLock == 0) release(&ptable.lock);
         return -1;
       }
       if(p->tcb.parentProc != curproc) {
         cprintf("thread_join> pid: %d is not a child of pid: %d\n", thread, curproc->pid);
-        release(&ptable.lock);
+        if(hadPtableLock == 0) release(&ptable.lock);
         return -1;
       }
       haveThread = 1;
@@ -903,13 +913,13 @@ int thread_join(thread_t thread, void **retval){
         p->tcb.threadtype = T_MAIN;
         p->tcb.parentProc = 0;
         p->tcb.retval = 0;
-        release(&ptable.lock);
+        if(hadPtableLock == 0) release(&ptable.lock);
         return 0;
       }
     }
     if(!haveThread || curproc->killed) {
       cprintf("thread_join> pid: %d does not exist\n", thread);
-      release(&ptable.lock);
+      if(hadPtableLock == 0) release(&ptable.lock);
       return -1;
     }
 
