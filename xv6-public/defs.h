@@ -205,3 +205,6 @@ void killHandler(void); //in proc.c, meant to be used in trap.c when a process i
 int growproc_thread(int);
 
 int kill_parentProc(int); //in proc.c
+
+int lockPtable();
+int unlockPtable();

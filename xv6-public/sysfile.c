@@ -417,16 +417,20 @@ sys_exec(void)
       return -1;
   }
 
-  struct cpu *c = mycpu();
   struct proc *p = myproc();
 
   if(p->tcb.threadtype == T_THREAD) {
-    
+    lockPtable();
+    //pushcli();
+    struct cpu *c = mycpu();
+    //popcli();
     c->proc = p->tcb.parentProc;
     p->state = SLEEPING;
     switchuvm(p->tcb.parentProc);
     p->tcb.parentProc->state = RUNNING;
+
     swtch(&(c->scheduler), p->tcb.parentProc->context);
+    c->proc = 0;
   }
 
   return exec(path, argv);
