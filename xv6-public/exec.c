@@ -17,9 +17,9 @@ exec(char *path, char **argv)
   struct inode *ip;
   struct proghdr ph;
   pde_t *pgdir, *oldpgdir;
-  struct proc *curproc = myproc()->tcb.parentProc;
+  struct proc *curproc = myproc();
 
-  exec_remove_thread(curproc);
+  exec_remove_thread();
 
   begin_op();
 
