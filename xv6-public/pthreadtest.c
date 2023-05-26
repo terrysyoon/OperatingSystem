@@ -56,6 +56,8 @@ int main()
 	void *retval2;
 	printf(1, "p1 %d joined: %d retval: %d\n",p1,thread_join(p1, &retval1), *((int*)retval1)); //0이 정상종료 맞음
 	printf(1, "p2 %d joined: %d retval: %d\n",p2,thread_join(p2, &retval2), *((int*)retval2));
+	printf(1, "retval1: %p\n", retval1);
+	printf(1, "retval2: %p\n", retval2);	
     // Done
 	/*while(1) {
 		
