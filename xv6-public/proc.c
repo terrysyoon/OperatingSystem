@@ -908,6 +908,7 @@ int thread_join(thread_t thread, void **retval){
     if(!haveThread || curproc->killed) {
       cprintf("thread_join> pid: %d does not exist\n", thread);
       release(&ptable.lock);
+      cprintf("thread_join> released lock\n", thread);
       return -1;
     }
 
