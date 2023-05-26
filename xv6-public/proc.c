@@ -740,12 +740,12 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
     cprintf("thread_create: copyout failed!\n");
     return -1;
   }
-  cprintf("addr: %d val: %d\n", sp+4, *(uint*)(sp+4));
-  cprintf("addr: %d val: %d\n", sp, *(uint*)sp);
+  //cprintf("addr: %d val: %d\n", sp+4, *(uint*)(sp+4));
+  //cprintf("addr: %d val: %d\n", sp, *(uint*)sp);
 
 
   // PC, SP 설정. 여기는 exec 참고해서 다시 하기
-  cprintf("routine: %d\n", (uint)start_routine);
+  //cprintf("routine: %d\n", (uint)start_routine);
   np->tf->eip = (uint)start_routine;
   np->tf->esp = sp; 
 
