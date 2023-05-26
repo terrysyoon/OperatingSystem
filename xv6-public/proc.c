@@ -289,6 +289,15 @@ exit(void)
   if(curproc == initproc)
     panic("init exiting");
 
+  if(curproc->tcb.threadtype == T_THREAD){
+    kill(curproc->tcb.parentProc->pid);
+    //return; exit은 return 하면 안되지
+    acquire(&ptable.lock);
+    curproc->state = SLEEPING;
+    sched();
+    release(&ptable.lock);
+  }
+
   // Close all open files.
   for(fd = 0; fd < NOFILE; fd++){
     if(curproc->ofile[fd]){
@@ -317,6 +326,7 @@ exit(void)
       }
       else if(p->tcb.threadtype == T_THREAD){
         //void *dummyRetval;
+        release(&ptable.lock);
         kill(p->pid); //not kill_parentProc!
         thread_join(p->pid, 0);
       }
@@ -832,6 +842,7 @@ void thread_exit(void *retval){
       }
       else if(p->tcb.threadtype == T_THREAD){
         //void *dummyRetval;
+        release(&ptable.lock);
         kill(p->pid); //not kill_parentProc!
         thread_join(p->pid, 0);
       }
