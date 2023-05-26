@@ -310,9 +310,19 @@ exit(void)
   // Pass abandoned children to init.
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->parent == curproc){
-      p->parent = initproc;
-      if(p->state == ZOMBIE)
-        wakeup1(initproc);
+      if(p->tcb.threadtype == T_MAIN) {
+        p->parent = initproc;
+        if(p->state == ZOMBIE)
+          wakeup1(initproc);
+      }
+      else if(p->tcb.threadtype == T_THREAD){
+        void *dummyRetval;
+        kill(p->pid); //not kill_parentProc!
+        thread_join(p->pid, dummyRetval);
+      }
+      else{
+        panic("exit: threadtype error");
+      }
     }
   }
 
@@ -542,6 +552,22 @@ kill(int pid)
       p->killed = 1;
       // Wake process from sleep if necessary.
       if(p->state == SLEEPING)
+        p->state = RUNNABLE;
+      release(&ptable.lock);
+      return 0;
+    }
+  }
+  release(&ptable.lock);
+  return -1;
+}
+
+int kill_parentProc(int tid) {
+  struct proc *p;
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if(p->pid == tid) {
+      p->tcb.parentProc->killed = 1;
+      if(p->tcb.parentProc->state == SLEEPING)
         p->state = RUNNABLE;
       release(&ptable.lock);
       return 0;
@@ -799,13 +825,19 @@ void thread_exit(void *retval){
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->parent == curproc){
-      /*
-      p->parent = initproc;
-      if(p->state == ZOMBIE)
-        wakeup1(initproc);
-      */
-     cprintf("thread_exit> thread %d exiting, but there are still child thread pid: %d\n", curproc->pid, p->pid);
-     panic("thread_exit> Orphan thread");
+      if(p->tcb.threadtype == T_MAIN) {
+        p->parent = initproc;
+        if(p->state == ZOMBIE)
+          wakeup1(initproc);
+      }
+      else if(p->tcb.threadtype == T_THREAD){
+        void *dummyRetval;
+        kill(p->pid); //not kill_parentProc!
+        thread_join(p->pid, dummyRetval);
+      }
+      else{
+        panic("thread_exit: threadtype error");
+      }
     }
   }
 
@@ -882,6 +914,15 @@ exec_remove_thread(struct proc *newMain) {
 }
 
 void killHandler() {
+  struct proc* curproc = myproc();
+  if(curproc->tcb.threadtype == T_THREAD) {
+    thread_exit(0);
+  }
+  else if(curproc->tcb.threadtype == T_MAIN){
+    exit();
+  } else {
+    panic("killHandler> not a thread or main");
+  }
   return;
 }
 
