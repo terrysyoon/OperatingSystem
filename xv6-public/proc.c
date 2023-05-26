@@ -152,6 +152,8 @@ userinit(void)
   p->tcb.pgid = p->pid;
   p->tcb.threadtype = T_MAIN;
   p->tcb.parentProc = p;
+
+  p->tcb.childThreadCount = 0;
   // ~Proj#2 fields
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
@@ -253,6 +255,8 @@ fork(void)
   np->tcb.pgid = np->pid;
   np->tcb.threadtype = T_MAIN;
   np->tcb.parentProc = np;
+
+  np->tcb.childThreadCount = 0;
   // ~proj#2 fields
 
   // Clear %eax so that fork returns 0 in the child.
@@ -551,6 +555,32 @@ kill(int pid)
   return -1;
 }
 
+int kill_thread(int tid) {
+  struct proc *p;
+  struct proc *t;
+  int found = 0;
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->pid == tid){ //found the thread
+      found = 1;
+      break;
+    }
+  }
+  if(found == 0){
+    release(&ptable.lock);
+    return -1;
+  }
+  t = p->tcb.parentProc;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->tcb.parentProc == t){ // thread, process 할 것 없이 kill
+      p->killed = 1;
+      if(t->state == SLEEPING)
+        t->state = RUNNABLE;
+    }
+  }
+  release(&ptable.lock);
+  return 0;
+}
 //PAGEBREAK: 36
 // Print a process listing to console.  For debugging.
 // Runs when user types ^P on console.

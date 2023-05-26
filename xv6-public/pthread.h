@@ -16,6 +16,9 @@ typedef struct {
 
   struct proc* parentProc; // subthread일 때만 사용.
   void* retval; // subthread일 때만 사용.
+
+  struct proc* childThread[NPROC];
+  int childThreadCount;
 }tcb_t;
 
 typedef int thread_t;
