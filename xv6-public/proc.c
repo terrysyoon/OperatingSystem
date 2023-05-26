@@ -291,7 +291,9 @@ exit(void)
 
   //proj2~
   if(curproc->tcb.threadtype == T_THREAD){
+    cprintf("killing process\n");
     kill(curproc->tcb.parentProc->pid);
+    cprintf("exiting thread\n");
     thread_exit(0);
     panic("thread exit failed");
   }
