@@ -291,10 +291,11 @@ exit(void)
 
   //proj2~
   if(curproc->tcb.threadtype == T_THREAD){
-    cprintf("killing process\n");
+    //cprintf("killing process\n");
     kill(curproc->tcb.parentProc->pid);
-    cprintf("exiting thread\n");
-    thread_exit(0);
+    //cprintf("exiting thread\n");
+    //thread_exit(0);
+    yield();
     panic("thread exit failed");
   }
   //~proj2
@@ -460,10 +461,15 @@ sched(void)
 void
 yield(void)
 {
-  acquire(&ptable.lock);  //DOC: yieldlock
+  int hadPtableLock = 1;
+  if(!holding(&ptable.lock)) {
+    acquire(&ptable.lock);
+    hadPtableLock = 0;
+  }
+  //acquire(&ptable.lock);  //DOC: yieldlock
   myproc()->state = RUNNABLE;
   sched();
-  release(&ptable.lock);
+  if(hadPtableLock == 0)release(&ptable.lock);
 }
 
 // A fork child's very first scheduling by scheduler()
@@ -833,7 +839,14 @@ void thread_exit(void *retval){
   end_op();
   curproc->cwd = 0;
 */
-  acquire(&ptable.lock);
+
+  //int hadPtableLock = 1;
+  if(!holding(&ptable.lock)) {
+    acquire(&ptable.lock);
+    //hadPtableLock = 0;
+  }
+
+  //acquire(&ptable.lock);
 
   curproc->tcb.retval = retval;
 
