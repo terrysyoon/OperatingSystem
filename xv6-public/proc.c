@@ -316,9 +316,9 @@ exit(void)
           wakeup1(initproc);
       }
       else if(p->tcb.threadtype == T_THREAD){
-        void *dummyRetval;
+        //void *dummyRetval;
         kill(p->pid); //not kill_parentProc!
-        thread_join(p->pid, dummyRetval);
+        thread_join(p->pid, 0);
       }
       else{
         panic("exit: threadtype error");
@@ -831,9 +831,9 @@ void thread_exit(void *retval){
           wakeup1(initproc);
       }
       else if(p->tcb.threadtype == T_THREAD){
-        void *dummyRetval;
+        //void *dummyRetval;
         kill(p->pid); //not kill_parentProc!
-        thread_join(p->pid, dummyRetval);
+        thread_join(p->pid, 0);
       }
       else{
         panic("thread_exit: threadtype error");
@@ -873,7 +873,8 @@ int thread_join(thread_t thread, void **retval){
       }
       haveThread = 1;
       if(p->state == ZOMBIE) {
-        *retval = p->tcb.retval;
+        if(retval)
+          *retval = p->tcb.retval;
         kfree(p->kstack);
         p->kstack = 0;
         //pgdir는 할당해제 금지
