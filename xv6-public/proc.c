@@ -692,12 +692,12 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
   sz = np->tcb.parentProc->sz;
   sz = PGROUNDUP(sz);
   //sp = sz;
-  cprintf("stacksize: %d sz: %d->",np->stackSize, sz);
+  //cprintf("stacksize: %d sz: %d->",np->stackSize, sz);
   if((sz = allocuvm(np->pgdir, sz, sz + PGSIZE*(np->stackSize +1))) == 0) {
     cprintf("thread_create: allocuvm() failed!\n");
     return -1;
   }
-  cprintf("%d\n",sz);
+  //cprintf("%d\n",sz);
   //clearpteu(np->pgdir, (char*)(sz - PGSIZE*(np->stackSize + 1)));
   np->tcb.parentProc->sz = sz;
   np->sz = sz; // May26th 2:33PM 이걸 빼먹노...

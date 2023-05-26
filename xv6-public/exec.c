@@ -88,7 +88,7 @@ exec(char *path, char **argv)
   if(copyout(pgdir, sp, ustack, (3+argc+1)*4) < 0)
     goto bad;
 
-  cprintf("oldsz: %d, sz: %d sp: %d\n", oldsz, sz, sp);
+  //cprintf("oldsz: %d, sz: %d sp: %d\n", oldsz, sz, sp);
 /*
   for(i = 0; sp + 4*i < sz; i++ ) {
     cprintf("addr: %d val: %d\n", sp+4*i, *(uint*)(sp+4*i));
