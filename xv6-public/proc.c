@@ -292,6 +292,7 @@ exit(void)
   //proj2~
   if(curproc->tcb.threadtype == T_THREAD){
     kill(curproc->tcb.parentProc->pid);
+    acquire(&ptable.lock);
     sched();
     panic("thread exit failed");
   }
