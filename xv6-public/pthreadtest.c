@@ -14,9 +14,14 @@ void *myThread(void *arg)
 	//sleep(100);
 	printf(1, "%s: begin counter: %d\n", (char *)arg, counter);
 	int i;
-
+	int a;
+	if(*((char*)arg) == 'A') {
+		a = 20000;
+	} else {
+		a = 10000;
+	}
 	//printf(1, "%s: i created\n", (char *)arg);
-	for (i = 0; i < 10000; i++)
+	for (i = 0; i < a; i++)
 	{
 		counter = counter + 1;
 		/*
