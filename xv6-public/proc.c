@@ -282,12 +282,20 @@ fork(void)
 void
 exit(void)
 {
-  struct proc *curproc = myproc()->tcb.parentProc;
+  struct proc *curproc = myproc();
   struct proc *p;
   int fd;
 
   if(curproc == initproc)
     panic("init exiting");
+
+  //proj2~
+  if(curproc->tcb.threadtype == T_THREAD){
+    kill(curproc->tcb.parentProc->pid);
+    sched();
+    panic("thread exit failed");
+  }
+  //~proj2
 
   // Close all open files.
   for(fd = 0; fd < NOFILE; fd++){
