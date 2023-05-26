@@ -39,13 +39,13 @@ int main()
 	// Create threads
 	thread_t p1;
 	thread_t p2; // thread identifiers.
-	printf(1, "main: create");
+	printf(1, "main: create A\n");
 	thread_create(&p1, myThread, "A");
-	printf(1, " (p1 = %d)\n", p1);
+	//printf(1, " (p1 = %d)\n", p1);
 
-	printf(1, "main: create");
+	printf(1, "main: create B\n");
 	thread_create(&p2, myThread, "B");
-	printf(1, " (p2 = %d)\n", p2);
+	//printf(1, " (p2 = %d)\n", p2);
 
 /*
 	// Wait for threads
@@ -66,8 +66,8 @@ int main()
 
 	//sleep(1000);
 	printf(1, "main: done with both (counter = %d)\n", counter);
-	while(1) {
+	/*while(1) {
 
-	} 
+	} */
 	exit();
 }
