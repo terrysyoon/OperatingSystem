@@ -3,7 +3,6 @@
 #include "user.h"
 
 #define NUM_THREAD 5
-#define NULL ((void*)0)
 
 void *thread_main(void *arg)
 {
@@ -21,7 +20,7 @@ void *thread_main(void *arg)
   }
   
   printf(1, "This code shouldn't be executed!!\n");
-  thread_exit(NULL);
+  exit();
   return 0;
 }
 

@@ -936,11 +936,21 @@ int thread_join(thread_t thread, void **retval){
 
 //May 23rd
 
-// 기본적으로 kill과 동일하지만 newMain은 제외, threadtype의 변경 수반
-// 또한, 시간이 걸리더라도 thread 모두 종료된 것 까지 확인
+// 기본적으로 kill과 동일하지만 newMain
 int
-exec_remove_thread(struct proc *newMain) {
-  return 0;
+exec_remove_thread(struct proc *curproc) {
+  struct proc *p;
+  int cnt = 0;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if(p->parent == curproc) {
+      if(p->tcb.threadtype == T_THREAD) {
+        cnt++;
+        kill(p->pid);
+        thread_join(p->pid, 0);
+      }
+    }
+  }
+  return cnt;
 }
 
 void killHandler() {
