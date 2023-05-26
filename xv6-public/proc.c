@@ -349,7 +349,7 @@ exit(void)
       }
     }
   }
-  
+
   // Parent might be sleeping in wait().
   wakeup1(curproc->parent);
 
@@ -593,7 +593,7 @@ int kill_parentProc(int tid) {
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
     if(p->pid == tid) {
-      p->tcb.parentProc->killed = 1;
+      p->tcb.parentProc->killed = 2;
       if(p->tcb.parentProc->state == SLEEPING)
         p->state = RUNNABLE;
       release(&ptable.lock);
