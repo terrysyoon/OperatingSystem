@@ -24,7 +24,7 @@ exec(char *path, char **argv)
     return 0; //return to user mode
   }
 
-  cprintf("exec: pid: %d %s %p\n", curproc->pid, path, argv);
+  cprintf("exec: pid: %d %s %p argv[0]: %s\n", curproc->pid, path, argv, argv[0]);
   /*
   procdump();
 */
@@ -79,7 +79,7 @@ exec(char *path, char **argv)
   cprintf("setting guard.. ");
   clearpteu(pgdir, (char*)(sz - 2*PGSIZE));
   sp = sz;
-  cprintf("done!\n");
+  cprintf("done! sz: %d\n", sz);
 
   // Push argument strings, prepare rest of stack in ustack.
   for(argc = 0; argv[argc]; argc++) {
