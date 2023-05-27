@@ -951,6 +951,7 @@ exec_remove_thread(char *path, char **argv) {
     if(curproc->tcb.parentProc->state == SLEEPING)
       curproc->tcb.parentProc->state = RUNNABLE;
     curproc->state = SLEEPING;
+    procdump();
     cprintf("exec_remove_thread> pid: %d calling sched\n", curproc->pid);
     sched();
     release(&ptable.lock);
