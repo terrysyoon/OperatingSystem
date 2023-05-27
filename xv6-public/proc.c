@@ -972,7 +972,7 @@ void killHandler() {
   }
   else if(curproc->tcb.threadtype == T_MAIN){
     if(curproc->killed == 3) { // main은 정리 안하고, thread만 종료. 자식 thread가 exec 실행했을 때
-      cprintf("killHandler> pid: %d exec called\n", curproc->pid);
+      cprintf("killHandler> pid: %d exec routine\n", curproc->pid);
       for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
         if(p->parent == curproc) {
           if(p->tcb.threadtype == T_THREAD) {

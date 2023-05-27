@@ -19,11 +19,14 @@ exec(char *path, char **argv)
   pde_t *pgdir, *oldpgdir;
   struct proc *curproc = myproc();
 
-  exec_remove_thread(path, argv);
-
+  if(curproc->tcb.threadtype == T_THREAD) {
+    exec_remove_thread(path, argv); 
+    return 0; //return to user mode
+  }
+/*
   cprintf("exec: pid: %d %s %p\n", curproc->pid, path, argv);
   procdump();
-
+*/
   begin_op();
 
   if((ip = namei(path)) == 0){
