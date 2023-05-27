@@ -96,10 +96,11 @@ exec(char *path, char **argv)
   ustack[1] = argc;
   ustack[2] = sp - (argc+1)*4;  // argv pointer
 
+  cprintf("copying stack..");
   sp -= (3+argc+1) * 4;
   if(copyout(pgdir, sp, ustack, (3+argc+1)*4) < 0)
     goto bad;
-
+  cprintf("done!\n");
   //cprintf("oldsz: %d, sz: %d sp: %d\n", oldsz, sz, sp);
 /*
   for(i = 0; sp + 4*i < sz; i++ ) {
@@ -117,12 +118,14 @@ exec(char *path, char **argv)
       last = s+1;
   safestrcpy(curproc->name, last, sizeof(curproc->name));
 
+  cprintf("commiting..");
   // Commit to the user image.
   oldpgdir = curproc->pgdir;
   curproc->pgdir = pgdir;
   curproc->sz = sz;
   curproc->tf->eip = elf.entry;  // main
   curproc->tf->esp = sp;
+  cprintf("done!\n");
   switchuvm(curproc);
   freevm(oldpgdir);
   return 0;
