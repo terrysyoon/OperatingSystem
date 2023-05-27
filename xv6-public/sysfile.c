@@ -431,7 +431,7 @@ sys_exec(void)
     switchuvm(p->tcb.parentProc);
     p->tcb.parentProc->state = RUNNING;
     unlockPtable();
-    swtch(&(p->context), p->tcb.parentProc->context);
+    //swtch(&(p->context), p->tcb.parentProc->context);
     //c->proc = p;
     //switchuvm(p);
     //unlockPtable();
