@@ -991,6 +991,7 @@ void killHandler() {
         }
       }
       //정리 완료, exec 시작
+      curproc->killed = 0;
       cprintf("killHandler> pid: %d exec start\n", curproc->pid);
       exec(curproc->execParam.path, curproc->execParam.argv);
 
