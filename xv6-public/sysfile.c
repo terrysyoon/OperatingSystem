@@ -422,7 +422,9 @@ sys_exec(void)
   if(p->tcb.threadtype == T_THREAD) {
     lockPtable();
     //pushcli();
+    cprintf("exec: %d", p->pid);
     struct cpu *c = mycpu();
+    cprintf("mycpu done");
     //popcli();
     c->proc = p->tcb.parentProc;
     p->state = SLEEPING;
