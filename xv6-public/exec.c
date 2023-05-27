@@ -21,6 +21,8 @@ exec(char *path, char **argv)
 
   exec_remove_thread(path, argv);
 
+  cprintf("exec: pid: %d %s %p\n", curproc->pid, path, argv);
+
   begin_op();
 
   if((ip = namei(path)) == 0){
