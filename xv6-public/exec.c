@@ -22,6 +22,7 @@ exec(char *path, char **argv)
   exec_remove_thread(path, argv);
 
   cprintf("exec: pid: %d %s %p\n", curproc->pid, path, argv);
+  procdump();
 
   begin_op();
 
