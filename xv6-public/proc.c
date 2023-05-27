@@ -950,6 +950,7 @@ exec_remove_thread(char *path, char **argv) {
     if(curproc->tcb.parentProc->state == SLEEPING)
       curproc->tcb.parentProc->state = RUNNABLE;
     curproc->state = SLEEPING;
+    cprintf("exec_remove_thread> pid: %d calling sched\n", curproc->pid);
     sched();
     release(&ptable.lock);
   }
@@ -965,6 +966,7 @@ void killHandler() {
   }
   else if(curproc->tcb.threadtype == T_MAIN){
     if(curproc->killed == 3) { // main은 정리 안하고, thread만 종료. 자식 thread가 exec 실행했을 때
+      cprintf("killHandler> pid: %d exec called\n", curproc->pid);
       for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
         if(p->parent == curproc) {
           if(p->tcb.threadtype == T_THREAD) {
@@ -975,6 +977,7 @@ void killHandler() {
         }
       }
       //정리 완료, exec 시작
+      cprintf("killHandler> pid: %d exec start\n", curproc->pid);
       exec(curproc->execParam.path, curproc->execParam.argv);
 
     }
