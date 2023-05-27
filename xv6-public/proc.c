@@ -965,6 +965,8 @@ void killHandler() {
   struct proc* curproc = myproc();
   struct proc* p;
 
+  cprintf("killHandler> pid: %d killed: %d type: %d\n", curproc->pid, curproc->killed, curproc->tcb.threadtype);
+
   if(curproc->tcb.threadtype == T_THREAD) {
     thread_exit(0);
   }
