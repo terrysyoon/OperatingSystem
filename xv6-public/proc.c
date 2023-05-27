@@ -580,7 +580,7 @@ kill(int pid)
       // Wake process from sleep if necessary.
       if(p->state == SLEEPING)
         p->state = RUNNABLE;
-      cprintf("pid: %d set killed to 1\n", pid);
+      //cprintf("pid: %d set killed to 1\n", pid);
       release(&ptable.lock);
       return 0;
     }
@@ -943,7 +943,7 @@ int
 exec_remove_thread(char *path, char **argv) {
   //struct proc *p;
   struct proc *curproc = myproc();
-  cprintf("exec_remove_thread> pid: %d calling exec_remove_thread\n", curproc->pid);
+  //cprintf("exec_remove_thread> pid: %d calling exec_remove_thread\n", curproc->pid);
   if(curproc->tcb.threadtype == T_THREAD) {
     acquire(&ptable.lock);
     curproc->tcb.parentProc->killed = 3;
@@ -960,7 +960,7 @@ exec_remove_thread(char *path, char **argv) {
       curproc->tcb.parentProc->state = RUNNABLE;
     curproc->state = SLEEPING;
     //procdump();
-    cprintf("exec_remove_thread> pid: %d calling sched\n", curproc->pid);
+    //cprintf("exec_remove_thread> pid: %d calling sched\n", curproc->pid);
     sched();
     release(&ptable.lock);
   }
@@ -971,28 +971,28 @@ void killHandler() {
   struct proc* curproc = myproc();
   struct proc* p;
 
-  cprintf("killHandler> pid: %d killed: %d type: %d\n", curproc->pid, curproc->killed, curproc->tcb.threadtype);
+  //cprintf("killHandler> pid: %d killed: %d type: %d\n", curproc->pid, curproc->killed, curproc->tcb.threadtype);
 
   if(curproc->tcb.threadtype == T_THREAD) {
     thread_exit(0);
   }
   else if(curproc->tcb.threadtype == T_MAIN){
     if(curproc->killed == 3) { // main은 정리 안하고, thread만 종료. 자식 thread가 exec 실행했을 때
-      cprintf("killHandler> pid: %d exec routine\n", curproc->pid);
+      //cprintf("killHandler> pid: %d exec routine\n", curproc->pid);
       for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
         if(p->parent == curproc) {
           if(p->tcb.threadtype == T_THREAD) {
             //cnt++;
             kill(p->pid);
-            cprintf("killed thread: %d\n", p->pid);
+            //cprintf("killed thread: %d\n", p->pid);
             thread_join(p->pid, 0);
-            cprintf("joined thread: %d\n", p->pid);
+            //cprintf("joined thread: %d\n", p->pid);
           }
         }
       }
       //정리 완료, exec 시작
       curproc->killed = 0;
-      cprintf("killHandler> pid: %d exec start\n", curproc->pid);
+      //cprintf("killHandler> pid: %d exec start\n", curproc->pid);
       exec(curproc->execParam.path, curproc->execParam.argv);
 
     }

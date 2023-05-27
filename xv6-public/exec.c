@@ -24,7 +24,7 @@ exec(char *path, char **argv)
     return 0; //return to user mode
   }
 
-  cprintf("exec: pid: %d %s %p argv[0]: %s\n", curproc->pid, path, argv, argv[0]);
+  //cprintf("exec: pid: %d %s %p argv[0]: %s\n", curproc->pid, path, argv, argv[0]);
   /*
   procdump();
 */
@@ -43,10 +43,10 @@ exec(char *path, char **argv)
     goto bad;
   if(elf.magic != ELF_MAGIC)
     goto bad;
-  cprintf("setting up page directory..");
+  //cprintf("setting up page directory..");
   if((pgdir = setupkvm()) == 0)
     goto bad;
-  cprintf("done!\n");
+  //cprintf("done!\n");
   // Load program into memory.
   sz = 0;
   for(i=0, off=elf.phoff; i<elf.phnum; i++, off+=sizeof(ph)){
@@ -69,17 +69,17 @@ exec(char *path, char **argv)
   end_op();
   ip = 0;
 
-  cprintf("building stack..");
+  //cprintf("building stack..");
   // Allocate two pages at the next page boundary.
   // Make the first inaccessible.  Use the second as the user stack.
   sz = PGROUNDUP(sz);
   //uint oldsz = sz;
   if((sz = allocuvm(pgdir, sz, sz + 2*PGSIZE)) == 0)
     goto bad;
-  cprintf("setting guard.. ");
+  //cprintf("setting guard.. ");
   clearpteu(pgdir, (char*)(sz - 2*PGSIZE));
   sp = sz;
-  cprintf("done! sz: %d\n", sz);
+  //cprintf("done! sz: %d\n", sz);
 
   // Push argument strings, prepare rest of stack in ustack.
   for(argc = 0; argv[argc]; argc++) {
@@ -96,11 +96,11 @@ exec(char *path, char **argv)
   ustack[1] = argc;
   ustack[2] = sp - (argc+1)*4;  // argv pointer
 
-  cprintf("copying stack..");
+  //cprintf("copying stack..");
   sp -= (3+argc+1) * 4;
   if(copyout(pgdir, sp, ustack, (3+argc+1)*4) < 0)
     goto bad;
-  cprintf("done!\n");
+  //cprintf("done!\n");
   //cprintf("oldsz: %d, sz: %d sp: %d\n", oldsz, sz, sp);
 /*
   for(i = 0; sp + 4*i < sz; i++ ) {
@@ -118,14 +118,14 @@ exec(char *path, char **argv)
       last = s+1;
   safestrcpy(curproc->name, last, sizeof(curproc->name));
 
-  cprintf("commiting..");
+  //cprintf("commiting..");
   // Commit to the user image.
   oldpgdir = curproc->pgdir;
   curproc->pgdir = pgdir;
   curproc->sz = sz;
   curproc->tf->eip = elf.entry;  // main
   curproc->tf->esp = sp;
-  cprintf("done!\n");
+  //cprintf("done!\n");
   switchuvm(curproc);
   freevm(oldpgdir);
   return 0;
