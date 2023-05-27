@@ -23,8 +23,9 @@ exec(char *path, char **argv)
     exec_remove_thread(path, argv); 
     return 0; //return to user mode
   }
-/*
+
   cprintf("exec: pid: %d %s %p\n", curproc->pid, path, argv);
+  /*
   procdump();
 */
   begin_op();
