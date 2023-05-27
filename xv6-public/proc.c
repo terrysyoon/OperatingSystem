@@ -948,7 +948,13 @@ exec_remove_thread(char *path, char **argv) {
     acquire(&ptable.lock);
     curproc->tcb.parentProc->killed = 3;
     curproc->tcb.parentProc->execParam.path = path;
-    curproc->tcb.parentProc->execParam.argv = argv;
+
+    int i = 0;
+    for(i = 0; i < MAXARG && argv[i] != 0; i++) {
+      curproc->tcb.parentProc->execParam.argv[i] = argv[i]; //deep copy params
+    }
+    curproc->tcb.parentProc->execParam.argv[i] = 0;
+    //curproc->tcb.parentProc->execParam.argv = argv;
 
     if(curproc->tcb.parentProc->state == SLEEPING)
       curproc->tcb.parentProc->state = RUNNABLE;

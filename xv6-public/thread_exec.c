@@ -13,7 +13,13 @@ void *thread_main(void *arg)
     char *pname = "/hello_thread";
     char *args[2] = {pname, 0};
     printf(1, "Executing...\n");
-    exec(pname, args);
+    exec(pname, args); // args가 할당해제 되는 느낌..
+    /*
+    가설)
+    * string literal 은 object file의 read-only data section 에 저장되어 있어서
+    * pname pointer가 할당 해제되어도 해당 literal의 주소는 남아있음. pname copy 해놓으면 됨
+    * args[]가 string literal에 대한 주소를 담기에, exec전에 할당 해제되면 문제 발생
+    */
   }
   else {
     sleep(200);

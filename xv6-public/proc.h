@@ -1,4 +1,5 @@
 #include "pthread.h"
+#include "param.h"
 
 // Per-CPU state
 struct cpu {
@@ -60,7 +61,7 @@ struct proc {
 
   struct {
     char *path;
-    char **argv;
+    char *argv[MAXARG];
   }execParam;
 };
 

@@ -1,3 +1,6 @@
+#ifndef _PARAM_H_
+#define _PARAM_H_
+
 #define NPROC        64  // maximum number of processes
 #define KSTACKSIZE 4096  // size of per-process kernel stack
 #define NCPU          8  // maximum number of CPUs
@@ -14,3 +17,5 @@
 
 #define MIN_STACK_SIZE (1) //exec2()
 #define MAX_STACK_SIZE (100) //exec2()
+
+#endif
