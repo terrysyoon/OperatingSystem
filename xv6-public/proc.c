@@ -941,6 +941,7 @@ int
 exec_remove_thread(char *path, char **argv) {
   //struct proc *p;
   struct proc *curproc = myproc();
+  cprintf("exec_remove_thread> pid: %d calling sched\n", curproc->pid);
   if(curproc->tcb.threadtype == T_THREAD) {
     acquire(&ptable.lock);
     curproc->tcb.parentProc->killed = 3;
