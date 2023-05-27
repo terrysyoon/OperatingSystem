@@ -973,7 +973,9 @@ void killHandler() {
           if(p->tcb.threadtype == T_THREAD) {
             //cnt++;
             kill(p->pid);
+            cprintf("killed thread: %d\n", p->pid);
             thread_join(p->pid, 0);
+            cprintf("joined thread: %d\n", p->pid);
           }
         }
       }
