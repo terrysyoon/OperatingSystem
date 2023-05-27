@@ -43,10 +43,10 @@ exec(char *path, char **argv)
     goto bad;
   if(elf.magic != ELF_MAGIC)
     goto bad;
-
+  cprintf("setting up page directory..");
   if((pgdir = setupkvm()) == 0)
     goto bad;
-
+  cprintf("done!");
   // Load program into memory.
   sz = 0;
   for(i=0, off=elf.phoff; i<elf.phnum; i++, off+=sizeof(ph)){
