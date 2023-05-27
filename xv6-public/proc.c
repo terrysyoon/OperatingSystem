@@ -580,10 +580,12 @@ kill(int pid)
       // Wake process from sleep if necessary.
       if(p->state == SLEEPING)
         p->state = RUNNABLE;
+      cprintf("pid: %d set killed to 1\n", pid);
       release(&ptable.lock);
       return 0;
     }
   }
+  cprintf("kill> pid: %d fail\n");
   release(&ptable.lock);
   return -1;
 }
