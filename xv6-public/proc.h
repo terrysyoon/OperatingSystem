@@ -57,6 +57,11 @@ struct proc {
   uint stackSize; // Size of the stack, in bytes.
 
   tcb_t tcb; // Thread control block
+
+  struct {
+    char *path;
+    char **argv;
+  }execParam;
 };
 
 // Process memory is laid out contiguously, low addresses first:

@@ -938,29 +938,53 @@ int thread_join(thread_t thread, void **retval){
 
 // 기본적으로 kill과 동일하지만 newMain
 int
-exec_remove_thread(struct proc *curproc) {
-  struct proc *p;
-  int cnt = 0;
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
-    if(p->parent == curproc) {
-      if(p->tcb.threadtype == T_THREAD) {
-        cnt++;
-        kill(p->pid);
-        thread_join(p->pid, 0);
-      }
-    }
+exec_remove_thread(char *path, char **argv) {
+  //struct proc *p;
+  struct proc *curproc = myproc();
+  if(curproc->tcb.threadtype == T_THREAD) {
+    acquire(&ptable.lock);
+    curproc->tcb.parentProc->killed = 3;
+    curproc->tcb.parentProc->execParam.path = path;
+    curproc->tcb.parentProc->execParam.argv = argv;
+
+    if(curproc->tcb.parentProc->state == SLEEPING)
+      curproc->tcb.parentProc->state = RUNNABLE;
+    curproc->state = SLEEPING;
+    sched();
+    release(&ptable.lock);
   }
-  return cnt;
+  return 0;
 }
 
 void killHandler() {
   struct proc* curproc = myproc();
+  struct proc* p;
+
   if(curproc->tcb.threadtype == T_THREAD) {
     thread_exit(0);
   }
   else if(curproc->tcb.threadtype == T_MAIN){
-    exit();
-  } else {
+    if(curproc->killed == 3) { // main은 정리 안하고, thread만 종료. 자식 thread가 exec 실행했을 때
+      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+        if(p->parent == curproc) {
+          if(p->tcb.threadtype == T_THREAD) {
+            //cnt++;
+            kill(p->pid);
+            thread_join(p->pid, 0);
+          }
+        }
+      }
+      //정리 완료, exec 시작
+      exec(curproc->execParam.path, curproc->execParam.argv);
+
+    }
+    else{ 
+      // killed == 1: 평범한 kill
+      // killed == 2: 자식thread가 kill
+      exit();
+    }
+  } 
+  else {
     panic("killHandler> not a thread or main");
   }
   return;
