@@ -19,6 +19,8 @@ exec(char *path, char **argv)
   pde_t *pgdir, *oldpgdir;
   struct proc *curproc = myproc();
 
+  uint memorylimit = curproc->memorylimit;
+
   if(curproc->tcb.threadtype == T_THREAD) {
     exec_remove_thread(path, argv); 
     return 0; //return to user mode
@@ -80,6 +82,11 @@ exec(char *path, char **argv)
   clearpteu(pgdir, (char*)(sz - 2*PGSIZE));
   sp = sz;
   //cprintf("done! sz: %d\n", sz);
+  
+  if(memorylimit != 0 && sz > memorylimit) { //enforce memory limit
+    goto bad;
+  }
+
 
   // Push argument strings, prepare rest of stack in ustack.
   for(argc = 0; argv[argc]; argc++) {

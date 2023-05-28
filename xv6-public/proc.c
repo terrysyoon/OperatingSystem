@@ -199,7 +199,7 @@ growproc_thread(int n)
 
   sz = curproc->tcb.parentProc->sz;
 
-  if(sz > curproc->tcb.parentProc->memorylimit && curproc->tcb.parentProc->memorylimit != 0){
+  if(sz + n > curproc->tcb.parentProc->memorylimit && curproc->tcb.parentProc->memorylimit != 0){
     //memory limit exceeded
     return -1;
   }
