@@ -170,6 +170,7 @@ userinit(void)
 
 // Grow current process's memory by n bytes.
 // Return 0 on success, -1 on failure.
+// kernel에서 사용 안하고, sys_sbrk에서만 호출 됐으나 이제는 growproc_thread로 대체. 아예 안쓰이는 함수.
 int
 growproc(int n)
 {
@@ -197,6 +198,12 @@ growproc_thread(int n)
   struct proc *curproc = myproc();
 
   sz = curproc->tcb.parentProc->sz;
+
+  if(sz > curproc->tcb.parentProc->memorylimit && curproc->tcb.parentProc->memorylimit != 0){
+    //memory limit exceeded
+    return -1;
+  }
+
   if(n > 0){
     if((sz = allocuvm(curproc->pgdir, sz, sz + n)) == 0)
       return -1;
@@ -658,7 +665,7 @@ setmemorylimit(int pid, int limit) {
         release(&ptable.lock);
         return -1;
       }
-      
+
       if((limit == 0) || p->sz <= limit) { // limit 설정 가능. limit 0은 unlimited, special case. 조건이 이게 맞는지는 확인 해보기.
         p->memorylimit = limit;
         //cprintf("set!\n");
@@ -743,12 +750,18 @@ int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) {
   sz = PGROUNDUP(sz);
   //sp = sz;
   //cprintf("stacksize: %d sz: %d->",np->stackSize, sz);
+
+  if(sz + PGSIZE*(np->stackSize+1) > np->tcb.parentProc->memorylimit && np->tcb.parentProc->memorylimit != 0) {
+    cprintf("thread_create: memory limit exceeded!\n");
+    return -1;
+  }
+
   if((sz = allocuvm(np->pgdir, sz, sz + PGSIZE*(np->stackSize +1))) == 0) {
     cprintf("thread_create: allocuvm() failed!\n");
     return -1;
   }
   //cprintf("%d\n",sz);
-  //clearpteu(np->pgdir, (char*)(sz - PGSIZE*(np->stackSize + 1)));
+  clearpteu(np->pgdir, (char*)(sz - PGSIZE*(np->stackSize + 1)));
   np->tcb.parentProc->sz = sz;
   np->sz = sz; // May26th 2:33PM 이걸 빼먹노...
   sp = sz;
@@ -993,8 +1006,8 @@ void killHandler() {
 
     }
     else{ 
-      // killed == 1: 평범한 kill
-      // killed == 2: 자식thread가 kill
+      // killed == 1: trap이 kill
+      // killed == 2: 기존의 kill = 1 대체, trap이 kill일 때만 1
       exit();
     }
   } 
@@ -1003,18 +1016,3 @@ void killHandler() {
   }
   return;
 }
-
-// replica of sys_sbrk
-/*
-int
-sbrk(int n)
-{
-  //cprintf("sbrk called!\n");
-  int addr;
-
-  if(growproc_thread(n) < 0)
-    return -1;
-  //cprintf("done!\n");
-  addr = myproc()->sz;
-  return addr;
-}*/

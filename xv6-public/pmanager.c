@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
                 path_buf[i] = buf[j];
             }
             path_buf[++i] = 0;
-            printf(1, "PATH: %s\n", path_buf);
+            //printf(1, "PATH: %s\n", path_buf);
             if(buf[j] != ' ') { //kill 뒤에 공백이 아니면
                 printf(1, "Could not parse limit!\nUsage: execute <path> <limit>\n");
                 continue;
