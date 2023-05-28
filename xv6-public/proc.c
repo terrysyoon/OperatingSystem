@@ -653,6 +653,12 @@ setmemorylimit(int pid, int limit) {
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->pid == pid) { // found the target.
+
+      if(p->tcb.threadtype == T_THREAD) { //pid를 가진 "프로세스"의 메모리 제한을 limit으로 설정합니다.
+        release(&ptable.lock);
+        return -1;
+      }
+      
       if((limit == 0) || p->sz <= limit) { // limit 설정 가능. limit 0은 unlimited, special case. 조건이 이게 맞는지는 확인 해보기.
         p->memorylimit = limit;
         //cprintf("set!\n");

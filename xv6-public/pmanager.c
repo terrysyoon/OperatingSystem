@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
         memset(buf, 0, nbuf);
         gets(buf, nbuf);
         if(buf[0] == 0) continue; //EOF
-        printf(1, "%s", buf);
+        //printf(1, "%s", buf);
         if(strcmp(buf, "exit\n") == 0 || strcmp(buf, "exit") == 0) { // 개행 문자까지 들어와서, 전자에서 조건 충족.
             break;
         } 
@@ -116,7 +116,6 @@ int main(int argc, char *argv[])
             limit_buf[++i] = 0;
             int limit = atoi(limit_buf);
 
-            printf(1, "Execute>> Path: %s Limit: %d\n", path_buf, limit);
             //fork~exec2
             int fork_res = fork1();
             char* argv[2];
@@ -131,11 +130,12 @@ int main(int argc, char *argv[])
                 }
                 exit();
             } else if(fork_res > 0) { //parent process
-                printf(1, "Running!\n");
+                //printf(1, "Running!\n");
                 wait();
                 //exit();
             } else {
                 //forking error
+                printf(1, "Execute>> FAIL) Path: %s Limit: %d\n", path_buf, limit);
                 exit();
             }
         }
