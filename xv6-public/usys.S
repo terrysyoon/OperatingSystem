@@ -29,10 +29,11 @@ SYSCALL(getpid)
 SYSCALL(sbrk)
 SYSCALL(sleep)
 SYSCALL(uptime)
-SYSCALL(myfunction) //Mar 21st 2023
-/*Syscalls for MLFQ*/
-SYSCALL(yield)
-SYSCALL(getLevel)
-SYSCALL(setPriority)
-SYSCALL(lock)
-SYSCALL(unlock)
+/*ELE3021 Project#2 Syscalls*/
+SYSCALL(setmemorylimit)
+SYSCALL(pmanagerList)
+SYSCALL(exec2)
+SYSCALL(procdump)
+SYSCALL(thread_create)
+SYSCALL(thread_join)
+SYSCALL(thread_exit)

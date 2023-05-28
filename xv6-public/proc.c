@@ -1,5 +1,3 @@
-//#define __DEBUG__
-
 #include "types.h"
 #include "defs.h"
 #include "param.h"
@@ -7,11 +5,8 @@
 #include "mmu.h"
 #include "x86.h"
 #include "proc.h"
-#ifndef __PROC_NEW_H__
-  #include "spinlock.h"
-#endif
+#include "spinlock.h"
 
-//#define __FORK_DEBUG__
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -20,45 +15,17 @@ struct {
 static struct proc *initproc;
 
 int nextpid = 1;
-
-struct MLFQ{
-  //struct spinlock lock;
-  struct queue L[NUM_QUEUES]; //L0~L1
-  int isLocked; //if the scheduler is locked. 0: unlocked, 1: locked
-  struct proc* urgent_process; // Dominating process
-};
-struct MLFQ_TICK mlfq_tick;
-struct MLFQ mlfq;
-
 extern void forkret(void);
 extern void trapret(void);
 
 static void wakeup1(void *chan);
 
+//int sbrk(int n);
+
 void
 pinit(void)
 {
   initlock(&ptable.lock, "ptable");
-}
-
-void 
-MLFQinit(void) {
-  int i;
-  //initlock(&mlfq.lock, "mlfq");
-  initlock(&mlfq_tick.lock, "mlfq_tick");
-  for(i = 0; i < NUM_QUEUES; i++) {
-    mlfq.L[i].level = i;
-    mlfq.L[i].size = 0;
-    mlfq.L[i].max_size = __INT32_MAX__;
-    mlfq.L[i].quantom = 2*i + 4;
-
-    mlfq.L[i].head = 0; //nullptr
-    mlfq.L[i].tail = 0;
-  }
-  mlfq.isLocked = 0;
-  mlfq.urgent_process = 0; //nullptr
-
-  mlfq_tick.global_tick = 0;
 }
 
 // Must be called with interrupts disabled
@@ -100,20 +67,6 @@ myproc(void) {
   return p;
 }
 
-void
-lookQueue(void) {
-  int i;
-  struct proc* p;
-  for(i = 0; i < NUM_QUEUES; i++) {
-    cprintf("L%d: H%d T%d | ",i,(mlfq.L[i].head)?mlfq.L[i].head->pid:0, (mlfq.L[i].tail)?mlfq.L[i].tail->pid:0);
-    for(p = mlfq.L[i].head; p != 0; p=p->next) {
-      cprintf("%d ", p->pid);
-    }
-    cprintf("\n");
-  }
-}
-
-
 //PAGEBREAK: 32
 // Look in the process table for an UNUSED proc.
 // If found, change state to EMBRYO and initialize
@@ -137,21 +90,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
-
-  p->q_number = 0;
-  p->priority = 3;
-  p->q_ticks = 0;
-  p->n_run = 0;
-  p->ctime = ticks;
-  p->etime = 0;
-  p->rtime = 0;
-  //p->iotime = 0;
-  p->q_ticks_total = 0;
-  p->next = 0; //nullptr
-  p->prev = 0; //nullptr
-  for(int i = 0; i < NUM_QUEUES; i++){
-    p->q[i] = 0;
-  }
+  p->memorylimit = 0; // Default memory limit: unlimited. TBS.
 
   release(&ptable.lock);
 
@@ -176,23 +115,6 @@ found:
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
 
-  acquire(&ptable.lock);
-
-  if(mlfq.L[0].head == 0) { //if L0 is empty
-    mlfq.L[0].head = p;
-    mlfq.L[0].tail = p;
-    p->prev = 0; //p is the first element of the doubly ll. Seems unneccesary but to be sure.
-  }
-  else{
-    //Create double link
-    p->prev = mlfq.L[0].tail;
-    mlfq.L[0].tail -> next = p;
-
-    //Update tail
-    mlfq.L[0].tail = p;
-  }
-  release(&ptable.lock);
-
   return p;
 }
 
@@ -211,6 +133,9 @@ userinit(void)
     panic("userinit: out of memory?");
   inituvm(p->pgdir, _binary_initcode_start, (int)_binary_initcode_size);
   p->sz = PGSIZE;
+  //proj2~
+  //p->tcb.procsz = p->sz;
+  //~proj2
   memset(p->tf, 0, sizeof(*p->tf));
   p->tf->cs = (SEG_UCODE << 3) | DPL_USER;
   p->tf->ds = (SEG_UDATA << 3) | DPL_USER;
@@ -219,6 +144,15 @@ userinit(void)
   p->tf->eflags = FL_IF;
   p->tf->esp = PGSIZE;
   p->tf->eip = 0;  // beginning of initcode.S
+
+  // Proj#2 fields~
+  p->memorylimit = 0;
+  p->stackSize = 1;
+
+  p->tcb.pgid = p->pid;
+  p->tcb.threadtype = T_MAIN;
+  p->tcb.parentProc = p;
+  // ~Proj#2 fields
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
@@ -232,13 +166,11 @@ userinit(void)
   p->state = RUNNABLE;
 
   release(&ptable.lock);
-
-  cprintf("=user init fin=");
-  procdump();
 }
 
 // Grow current process's memory by n bytes.
 // Return 0 on success, -1 on failure.
+// kernel에서 사용 안하고, sys_sbrk에서만 호출 됐으나 이제는 growproc_thread로 대체. 아예 안쓰이는 함수.
 int
 growproc(int n)
 {
@@ -258,6 +190,40 @@ growproc(int n)
   return 0;
 }
 
+
+int
+growproc_thread(int n)
+{
+  uint sz;
+  struct proc *curproc = myproc();
+
+  sz = curproc->tcb.parentProc->sz;
+
+  if(sz + n > curproc->tcb.parentProc->memorylimit && curproc->tcb.parentProc->memorylimit != 0){
+    //memory limit exceeded
+    return -1;
+  }
+
+  if(n > 0){
+    if((sz = allocuvm(curproc->pgdir, sz, sz + n)) == 0)
+      return -1;
+  } else if(n < 0){
+    if((sz = deallocuvm(curproc->pgdir, sz, sz + n)) == 0)
+      return -1;
+  }
+  curproc->tcb.parentProc->sz = sz;
+  curproc->sz = sz;
+
+  struct proc *p;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->tcb.pgid == curproc->tcb.pgid){
+      p->sz = sz;
+    }
+  }
+  switchuvm(curproc);
+  return 0;
+}
+
 // Create a new process copying p as the parent.
 // Sets up stack to return as if from system call.
 // Caller must set state of returned proc to RUNNABLE.
@@ -272,6 +238,7 @@ fork(void)
   if((np = allocproc()) == 0){
     return -1;
   }
+
   // Copy process state from proc.
   if((np->pgdir = copyuvm(curproc->pgdir, curproc->sz)) == 0){
     kfree(np->kstack);
@@ -280,8 +247,20 @@ fork(void)
     return -1;
   }
   np->sz = curproc->sz;
+  // proj2~
+  //np->tcb.procsz = np->sz;
+  // ~proj2
   np->parent = curproc;
   *np->tf = *curproc->tf;
+
+  // proj#2 fields~
+  np->memorylimit = curproc->memorylimit;
+  np->stackSize = curproc->stackSize;
+
+  np->tcb.pgid = np->pid;
+  np->tcb.threadtype = T_MAIN;
+  np->tcb.parentProc = np;
+  // ~proj#2 fields
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
@@ -298,6 +277,7 @@ fork(void)
   acquire(&ptable.lock);
 
   np->state = RUNNABLE;
+
   release(&ptable.lock);
 
   return pid;
@@ -316,6 +296,31 @@ exit(void)
   if(curproc == initproc)
     panic("init exiting");
 
+  if(curproc->tcb.threadtype == T_THREAD){
+    //kill(curproc->tcb.parentProc->pid);
+    //return; exit은 return 하면 안되지
+    acquire(&ptable.lock);
+    // kill parent process
+    curproc->tcb.parentProc->killed = 2;
+    if(curproc->tcb.parentProc->state == SLEEPING)
+      curproc->tcb.parentProc->state = RUNNABLE;
+    curproc->state = SLEEPING;
+    //
+    /*
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->pid == pid){
+        p->killed = 1;
+        // Wake process from sleep if necessary.
+        if(p->state == SLEEPING)
+          p->state = RUNNABLE;
+        release(&ptable.lock);
+        return 0\
+      }
+    }*/
+    sched();
+    release(&ptable.lock);
+  }
+
   // Close all open files.
   for(fd = 0; fd < NOFILE; fd++){
     if(curproc->ofile[fd]){
@@ -331,27 +336,30 @@ exit(void)
 
   acquire(&ptable.lock);
 
-  // Parent might be sleeping in wait().
-  wakeup1(curproc->parent);
-
   // Pass abandoned children to init.
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->parent == curproc){
-      p->parent = initproc;
-      if(p->state == ZOMBIE)
-        wakeup1(initproc);
+      if(p->tcb.threadtype == T_MAIN) {
+        p->parent = initproc;
+        if(p->state == ZOMBIE)
+          wakeup1(initproc);
+      }
+      else if(p->tcb.threadtype == T_THREAD){
+        //void *dummyRetval;
+        release(&ptable.lock);
+        kill(p->pid); //not kill_parentProc!
+        thread_join(p->pid, 0);
+        acquire(&ptable.lock);
+      }
+      else{
+        panic("exit: threadtype error");
+      }
     }
   }
 
-/* 할당 해제 시 큐에서 지우도록
-  //Remove from MLFQ queue
-  if(curproc->prev) { //if this process is not head
-    curproc->prev->next = curproc->next;
-  }
-  else { //if this process is head
-    mlfq.L[curproc->q_number].head = curproc->next;
-  }
-*/
+  // Parent might be sleeping in wait().
+  wakeup1(curproc->parent);
+
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
   sched();
@@ -386,20 +394,6 @@ wait(void)
         p->name[0] = 0;
         p->killed = 0;
         p->state = UNUSED;
-
-        if(p == mlfq.L[p->q_number].head && p == mlfq.L[p->q_number].tail) {
-          mlfq.L[p->q_number].head = 0;
-          mlfq.L[p->q_number].tail = 0;
-        } else if(p == mlfq.L[p->q_number].head) {
-          mlfq.L[p->q_number].head = p->next;
-          if(mlfq.L[p->q_number].head->next) mlfq.L[p->q_number].head->next->prev = mlfq.L[p->q_number].head; //check for nullptr
-        } else if(p == mlfq.L[p->q_number].tail) {
-          mlfq.L[p->q_number].tail = p->prev;
-          if(mlfq.L[p->q_number].tail) mlfq.L[p->q_number].tail->next = 0;
-        } else {
-          if(p->prev) p->prev->next = p->next;
-          if(p->next) p->next->prev = p->prev;
-        }
         release(&ptable.lock);
         return pid;
       }
@@ -427,176 +421,37 @@ wait(void)
 void
 scheduler(void)
 {
-
-  int last_serv = 0;
-  int last_level = -1;
-  int pass_lastserv = 0;
-
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
-
-  struct proc* L2_cand = 0;
-  int level = 0;
+  
   for(;;){
     // Enable interrupts on this processor.
     sti();
-    //procdump();
-    L2_cand = 0;
-    pass_lastserv = 0;
+
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    if(mlfq.isLocked) {
-      p = mlfq.urgent_process;
-      last_serv = 0;
-      last_level = -1;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->state != RUNNABLE)
+        continue;
+
+      // Switch to chosen process.  It is the process's job
+      // to release ptable.lock and then reacquire it
+      // before jumping back to us.
+      c->proc = p;
+      switchuvm(p);
+      p->state = RUNNING;
+
+      swtch(&(c->scheduler), p->context);
+      switchkvm();
+
+      // Process is done running for now.
+      // It should have changed its p->state before coming back.
+      c->proc = 0;
     }
-    else{
-      for(level = 0; level < NUM_QUEUES-1; level++) //L0~L1
-      { 
-        struct proc* L_cand = 0;
-
-        for(p = mlfq.L[level].head; p != 0; p = p->next) { // Search till the end of the linked list queue.
-        
-          if(p->state != RUNNABLE)
-            continue;
-
-          if(p->q_number != level) {
-              procdump();
-              lookQueue();
-              panic("Contaminated MLFQ queue.");
-          }
-
-          if(p->q[level] >= mlfq.L[level].quantom) { //If this process spent all quantoms available from the queue it belongs.
-
-            p->q[level] = 0; //Once the priority/queue modification occured, reset the quantom count of this process for L[level]
-            //L0~L1: This process must be sent to the lower level queue.
-            //FIXME: The original queue must be concatenated. (if L0-> L1, concat L0) -> Implement doubly linked list.
-          
-          
-            if(p == mlfq.L[level].head && p == mlfq.L[level].tail) {
-              mlfq.L[level].head = 0;
-              mlfq.L[level].tail = 0;
-            } else if(p == mlfq.L[level].head) {
-              mlfq.L[level].head = p->next;
-              if(mlfq.L[level].head->next) mlfq.L[level].head->next->prev = mlfq.L[level].head; //check for nullptr
-            } else if(p == mlfq.L[level].tail) {
-              mlfq.L[level].tail = p->prev;
-              if(mlfq.L[level].tail) mlfq.L[level].tail->next = 0;
-            } else {
-              if(p->prev) {
-                p->prev->next = p->next;
-              }
-              if(p->next) {
-                p->next->prev = p->prev;
-              }
-            }
-
-            //p->prev = 0;
-            p->next = 0; //When demoted, the process must attach to the tail.
-
-            if(mlfq.L[level+1].head) { //if the lower level queue is not empty
-              p->prev = mlfq.L[level+1].tail;
-              mlfq.L[level+1].tail->next = p;
-              mlfq.L[level+1].tail = p;
-            } else{
-              mlfq.L[level+1].head = p;
-              mlfq.L[level+1].tail = p;
-            }
-            p->q_number++;
-            continue; //This process must be skipped. (It will be serviced in the next iteration.)
-          }
-
-          L_cand = p;
-          
-          if(last_level != level || pass_lastserv) 
-          {
-            break;
-          }
-
-          if(p->pid == last_serv) 
-          {
-            pass_lastserv = 1;
-          }
-        }
-        if(L_cand)
-        {
-          //cprintf("Found L%d cand\n",level);
-          if(!p) p = L_cand;
-          break;
-        }
-    }
-
-    if(!p){ //L0~L1 못 찾음
-      L2_cand = 0;
-      for(; level < NUM_QUEUES; level++) 
-      { //L2
-          //cprintf("Level: %d\n", level);
-          for(p = mlfq.L[level].head; p != 0; p = p->next) { // Search till the end of the linked list queue.
-
-            if(p->pid == last_serv) 
-            {
-              pass_lastserv = 1;
-            }
-
-            if(p->state != RUNNABLE)
-              continue;
-
-            if(p->q[level] >= mlfq.L[level].quantom) { //If this process spent all quantoms available from the queue it belongs.
-
-              p->q[level] = 0; //Once the priority/queue modification occured, reset the quantom count of this process for L[level]
-
-              //L2: This process must be promoted
-              if(p->priority > 0) {
-                p->priority--;
-              }
-            }
-
-            if(!L2_cand || L2_cand->priority > p->priority) {
-              L2_cand = p;
-            }
-        }
-      }
-      p = L2_cand;
-    }
-      
-    if(!p)
-    {
-      release(&ptable.lock);
-      //procdump();
-      continue;
-      panic("No runnable proc!");
-    }
-     
-    p->q[p->q_number]++; //increase consumed time quamtom
-      
-    last_serv = p->pid;
-    last_level = level;
-  }
-
-
-
-  p->q_ticks_total++;
-
-
-  // Switch to chosen process.  It is the process's job
-  // to release ptable.lock and then reacquire it
-  // before jumping back to us.
-  c->proc = p;
-  switchuvm(p);
-  p->state = RUNNING;
-
-  swtch(&(c->scheduler), p->context);
-  switchkvm();
-
-  // Process is done running for now.
-  // It should have changed its p->state before coming back.
-  c->proc = 0;
-
-  release(&ptable.lock);
+    release(&ptable.lock);
 
   }
-  panic("Scheduler terminated!");
 }
 
 // Enter scheduler.  Must hold only ptable.lock
@@ -614,10 +469,8 @@ sched(void)
 
   if(!holding(&ptable.lock))
     panic("sched ptable.lock");
-  if(mycpu()->ncli != 1){
-    cprintf("ncli: %d\n", mycpu()->ncli);
+  if(mycpu()->ncli != 1)
     panic("sched locks");
-  }
   if(p->state == RUNNING)
     panic("sched running");
   if(readeflags()&FL_IF)
@@ -629,18 +482,11 @@ sched(void)
 
 // Give up the CPU for one scheduling round.
 void
-yield(void) //must be altered for this project. no signature change required.
-{  
-
-  //FIXME: nonpreemptive yield가 아니면 여기서 초기화 하면 안되는데
-  struct proc *p;
+yield(void)
+{
   acquire(&ptable.lock);  //DOC: yieldlock
-  //acquire(&mlfq.lock);
-  p = myproc();
-  p->state = RUNNABLE;
-  //p->q[q_number] = 0;
+  myproc()->state = RUNNABLE;
   sched();
-  //release(&mlfq.lock);
   release(&ptable.lock);
 }
 
@@ -692,8 +538,6 @@ sleep(void *chan, struct spinlock *lk)
   p->chan = chan;
   p->state = SLEEPING;
 
-  p->q[p->q_number] = 0;
-
   sched();
 
   // Tidy up.
@@ -715,14 +559,8 @@ wakeup1(void *chan)
   struct proc *p;
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-    if(p->state == SLEEPING && p->chan == chan){
+    if(p->state == SLEEPING && p->chan == chan)
       p->state = RUNNABLE;
-      int i = 0;
-      for(i = 0; i < NUM_QUEUES; i++) {
-        p->q[i] = 0;
-      }
-    }
- 
 }
 
 // Wake up all processes sleeping on chan.
@@ -745,15 +583,28 @@ kill(int pid)
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->pid == pid){
-      p->killed = 1;
+      p->killed = 2;
       // Wake process from sleep if necessary.
-      if(p->state == SLEEPING) { 
-        int i;
+      if(p->state == SLEEPING)
         p->state = RUNNABLE;
-        for(i = 0; i < NUM_QUEUES; i++) {
-        p->q[i] = 0;
-        }
-      }
+      //cprintf("pid: %d set killed to 1\n", pid);
+      release(&ptable.lock);
+      return 0;
+    }
+  }
+  cprintf("kill> pid: %d fail\n");
+  release(&ptable.lock);
+  return -1;
+}
+
+int kill_parentProc(int tid) {
+  struct proc *p;
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if(p->pid == tid) {
+      p->tcb.parentProc->killed = 2;
+      if(p->tcb.parentProc->state == SLEEPING)
+        p->state = RUNNABLE;
       release(&ptable.lock);
       return 0;
     }
@@ -795,207 +646,373 @@ procdump(void)
       for(i=0; i<10 && pc[i] != 0; i++)
         cprintf(" %p", pc[i]);
     }
-    cprintf(" L%d %d", p->q_number, p->q[p->q_number]);
     cprintf("\n");
   }
 }
 
-// Includes scheduler unlock
-void 
-MLFQreset(void) {
-  struct proc *p;
-  struct proc *pn;
+int
+setmemorylimit(int pid, int limit) {
+  struct proc* p;
 
+  if(limit < 0) {
+    return -1;
+  }
   acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->pid == pid) { // found the target.
 
-  if(mlfq.isLocked) schedulerUnlockChecked();
-
-  int level;
-  for(level = 0; level < NUM_QUEUES; level++) {
-
-    for(p = mlfq.L[level].head; p != 0; p = pn) {
-      pn = p->next;
-
-      // reset priority fields, as required by the assignment
-      p->q_number = 0;
-      p->priority = 3;
-      //p->q_ticks = 0;
-      int i;
-      for(i = 0; i < NUM_QUEUES; i++) {
-        p->q[i] = 0;
+      if(p->tcb.threadtype == T_THREAD) { //pid를 가진 "프로세스"의 메모리 제한을 limit으로 설정합니다.
+        release(&ptable.lock);
+        return -1;
       }
 
-      if(level == 0) continue; //moving queue is not required if this process already belongs to L0
-
-      p->prev = 0;
-      p->next = 0;
-
-      if(!mlfq.L[0].head) //if L0 is empty, make this process the head. 
-      {
-        mlfq.L[0].head = p;
-        mlfq.L[0].tail = p;
-      } 
-      else
-      {
-        p->prev = mlfq.L[0].tail;
-        if(mlfq.L[0].tail) mlfq.L[0].tail->next = p;
-        else{
-          procdump();
-          lookQueue();
-          panic("cannot find tail of L0");
-        }
-        mlfq.L[0].tail = p;
-        mlfq.L[0].tail->next = 0; //remove possible cycle.
+      if((limit == 0) || p->sz <= limit) { // limit 설정 가능. limit 0은 unlimited, special case. 조건이 이게 맞는지는 확인 해보기.
+        p->memorylimit = limit;
+        //cprintf("set!\n");
+        release(&ptable.lock);
+        return 0; // op success
+      }
+      else { // 명세: 이미 할당된 메모리가 더 큰 경우 에러
+        release(&ptable.lock);
+        return -1; // op fail
       }
     }
-  }
-  
-  for(level = 1; level < NUM_QUEUES; level++) {
-    mlfq.L[level].head = 0;
-    mlfq.L[level].tail = 0;
   }
   release(&ptable.lock);
+  return -1; // failed to find the target.
 }
 
-int getLevel(void) {
-  struct proc *p = myproc();
-  return p->q_number;
-}
+void
+pmanagerList(void) {
+  static char *states[] = {
+  [UNUSED]    "unused",
+  [EMBRYO]    "embryo",
+  [SLEEPING]  "sleep ",
+  [RUNNABLE]  "runble",
+  [RUNNING]   "run   ",
+  [ZOMBIE]    "zombie"
+  };
 
-void setPriority(int pid, int priority) {
   struct proc *p;
+  char *state;
 
-  if(priority < 0 || priority > 3) {
-    cprintf("Priority must be between 0 and 3.\n");
-    return;
+  //acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(!((p->state == RUNNING || p->state == RUNNABLE || p->state == SLEEPING) && p->tcb.threadtype == T_MAIN)) // 세 조건 중 하나 & main thread 만 출력
+      continue;
+
+    if(p->state >= 0 && p->state < NELEM(states) && states[p->state])
+      state = states[p->state];
+    else
+      state = "???";
+    
+    cprintf("%s %d %s %d %d %d\n", p->name, p->pid, state, p->stackSize, p->sz, p->memorylimit);
+    cprintf("\n");
   }
+}
+
+int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) { //fork 후 stack만 다시 할당. context는 start_routine으로 변경 필요(PC)
+  struct proc *curproc = myproc();
+  struct proc *np; 
+
+  int i;
+  //void* stack;
+
+  uint sz, sp, ustack[4];
+
+  if((np = allocproc()) == 0) {
+    cprintf("thread_create: allocproc() failed!\n");
+    return -1;
+  }
+  *thread = np->pid; // thread id
+
+  np->pgdir = curproc->pgdir;
+  //Project 2 추가
+  np->memorylimit = curproc->memorylimit; // setmemorylimit하면 같은 pgid인 thread 모두 갱신하게 해야겠네
+  np->stackSize = curproc->stackSize;
+
+  np->tcb.pgid = curproc->tcb.pgid; // 부모와 같은 process group
+  np->tcb.threadtype = T_THREAD; // sub thread
+  np->tcb.parentProc = curproc->tcb.parentProc;
+  /*
+  // malloc 대신에 sbrk 사용!!
+  np->tcb.stackEndAddress = curproc->tcb.procsz; //stack grows down
+  np->tcb.stackBeginAddress = sbrk(PGSIZE * (curproc->stackSize + 1)); //procsz 뒤에 붙이기. 하나는 guard
+
+  cprintf("stackBeginAddress: %d\n", np->tcb.stackBeginAddress);
+  cprintf("stackEndAddress: %d\n", np->tcb.stackEndAddress);
+
+  //가드페이지 설정
+  //clearpteu(np->pgdir, (char*)(curproc->sz - (curproc->stackSize)*PGSIZE));
+*/
+
+  sz = np->tcb.parentProc->sz;
+  sz = PGROUNDUP(sz);
+  //sp = sz;
+  //cprintf("stacksize: %d sz: %d->",np->stackSize, sz);
+
+  if(sz + PGSIZE*(np->stackSize+1) > np->tcb.parentProc->memorylimit && np->tcb.parentProc->memorylimit != 0) {
+    cprintf("thread_create: memory limit exceeded!\n");
+    return -1;
+  }
+
+  if((sz = allocuvm(np->pgdir, sz, sz + PGSIZE*(np->stackSize +1))) == 0) {
+    cprintf("thread_create: allocuvm() failed!\n");
+    return -1;
+  }
+  //cprintf("%d\n",sz);
+  clearpteu(np->pgdir, (char*)(sz - PGSIZE*(np->stackSize + 1)));
+  np->tcb.parentProc->sz = sz;
+  np->sz = sz; // May26th 2:33PM 이걸 빼먹노...
+  sp = sz;
+
+  //stack = (void*)np->tcb.stackBeginAddress;
+  if(sp % PGSIZE) { 
+      cprintf("thread_create: Stack not aligned!\n");
+      // 정상적인 상황이라면 여기 올 일이 없다.
+  }
+
+  //np->tcb.procsz = curproc->tcb.procsz;
+  np->parent = curproc;
+  *np->tf = *curproc->tf;
+
+  // Clear %eax so that fork returns 0 in the child.
+  np->tf->eax = 0;
+/*
+  *(uint*)(stack-4) = 0xfffffff0; // fake return PC
+  *(uint*)(stack-8) = (uint)arg; // argument
+*/
+/*
+  ustack[0] = 0xffffffff;  // fake return PC
+  ustack[1] = (uint)arg; // argument
+*/
+
+  //ustack[0] = 0xffffffff;  // fake return PC
+  //ustack[1] = (uint)arg; // argument
+  //ustack[2] = (uint)arg;  // fake return PC
+  //ustack[3] = (uint)arg; // argument
+
+  /*
+  ustack[0] = (uint)arg;
+  sp -= 4;
+  */
+  ustack[0] = 0xffffffff;  // fake return PC
+  ustack[1] = (uint)arg; // argument
+  sp -= 8;
+  if(copyout(np->pgdir, sp, ustack, 8) < 0) {
+    cprintf("thread_create: copyout failed!\n");
+    return -1;
+  }
+  //cprintf("addr: %d val: %d\n", sp+4, *(uint*)(sp+4));
+  //cprintf("addr: %d val: %d\n", sp, *(uint*)sp);
+
+
+  // PC, SP 설정. 여기는 exec 참고해서 다시 하기
+  //cprintf("routine: %d\n", (uint)start_routine);
+  np->tf->eip = (uint)start_routine;
+  np->tf->esp = sp; 
+
+  for(i = 0; i < NOFILE; i++)
+    if(curproc->ofile[i])
+      np->ofile[i] = filedup(curproc->ofile[i]); // file reference count 올리고 parameter 그대로 반환
+  np->cwd = idup(curproc->cwd); // 마찬가지로 reference 올리기
+
+  safestrcpy(np->name, curproc->name, sizeof(curproc->name));
+
+  *thread = np->pid; // thread id 반환
 
   acquire(&ptable.lock);
 
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
-    if(p->pid == pid) {
-      p->priority = priority;
+  np->state = RUNNABLE;
+
+  release(&ptable.lock);
+  return 0;
+}
+
+void thread_exit(void *retval){
+  struct proc *curproc = myproc();
+  struct proc *p;
+  //int fd;
+
+  //cprintf("thread_exit>  pid: %d retval: %p\n",curproc->pid, retval);
+
+  if(curproc->tcb.threadtype == T_MAIN) {
+    // exit();
+    cprintf("thread_exit>  pid: %d Mainthread cannot exit\n");
+  }
+/*
+  // Close all open files.
+  for(fd = 0; fd < NOFILE; fd++){
+    if(curproc->ofile[fd]){
+      fileclose(curproc->ofile[fd]);
+      curproc->ofile[fd] = 0;
+    }
+  }
+
+  begin_op();
+  iput(curproc->cwd);
+  end_op();
+  curproc->cwd = 0;
+*/
+  acquire(&ptable.lock);
+
+  curproc->tcb.retval = retval;
+
+  // 이 thread를 위해 thread_create한 아이.
+  wakeup1(curproc->parent);
+
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->parent == curproc){
+      if(p->tcb.threadtype == T_MAIN) {
+        p->parent = initproc;
+        if(p->state == ZOMBIE)
+          wakeup1(initproc);
+      }
+      else if(p->tcb.threadtype == T_THREAD){
+        //void *dummyRetval;
+        release(&ptable.lock);
+        kill(p->pid); //not kill_parentProc!
+        thread_join(p->pid, 0);
+      }
+      else{
+        panic("thread_exit: threadtype error");
+      }
+    }
+  }
+
+  curproc->state = ZOMBIE;
+  //release(&ptable.lock);
+  //cprintf("calling sched\n");
+  sched();
+  panic("zombie exit");
+  return;
+}
+
+/// wait과 비슷하게
+int thread_join(thread_t thread, void **retval){
+  struct proc *p;
+  int haveThread;
+  struct proc *curproc = myproc();
+
+  acquire(&ptable.lock);
+  for(;;) {
+    haveThread = 0;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+      if(p->pid != thread)
+        continue;
+      if(p->tcb.threadtype != T_THREAD) {
+        cprintf("thread_join> pid: %d is not a thread\n", thread);
+        release(&ptable.lock);
+        return -1;
+      }
+      if(p->tcb.parentProc != curproc) {
+        cprintf("thread_join> pid: %d is not a child of pid: %d\n", thread, curproc->pid);
+        release(&ptable.lock);
+        return -1;
+      }
+      haveThread = 1;
+      if(p->state == ZOMBIE) {
+        if(retval)
+          *retval = p->tcb.retval;
+        kfree(p->kstack);
+        p->kstack = 0;
+        //pgdir는 할당해제 금지
+        p->pid = 0;
+        p->parent = 0;
+        p->name[0] = 0;
+        p->killed = 0;
+        p->state = UNUSED;
+
+        p->memorylimit = 0;
+        p->stackSize = 1;
+        p->tcb.pgid = 0;
+        p->tcb.threadtype = T_MAIN;
+        p->tcb.parentProc = 0;
+        p->tcb.retval = 0;
+        release(&ptable.lock);
+        return 0;
+      }
+    }
+    if(!haveThread || curproc->killed == 1) {
+      cprintf("thread_join> pid: %d does not exist\n", thread);
       release(&ptable.lock);
-      return;
+      cprintf("thread_join> released lock\n", thread);
+      return -1;
     }
+
+    sleep(curproc, &ptable.lock);
   }
-  release(&ptable.lock); 
-  cprintf("No process with pid %d found.\n", pid);
+  return 0;
 }
 
-void schedulerLock(int password) {
-  struct proc* p = myproc();
+//May 23rd
 
-  //if password is correct, lock the scheduler.
-  //Also check if the scheduler is already locked.
-
-  mlfq_tick.global_tick = 0; //reset global tick counter
-
-  if(password == SCHEDULER_LOCK_PASSWORD && !mlfq.isLocked) {
-    //To-Dos:
-    //reset global tick counter -> done, April 12nd 2023
+// 기본적으로 kill과 동일하지만 newMain
+int
+exec_remove_thread(char *path, char **argv) {
+  //struct proc *p;
+  struct proc *curproc = myproc();
+  //cprintf("exec_remove_thread> pid: %d calling exec_remove_thread\n", curproc->pid);
+  if(curproc->tcb.threadtype == T_THREAD) {
     acquire(&ptable.lock);
-    mlfq.isLocked = 1;
-    mlfq.urgent_process = p;
+    curproc->tcb.parentProc->killed = 3;
+    curproc->tcb.parentProc->execParam.path = path;
 
-    int level = p->q_number;
-    if(p == mlfq.L[level].head && p == mlfq.L[level].tail) {
-      mlfq.L[level].head = 0;
-      mlfq.L[level].tail = 0;
-    } else if(p == mlfq.L[level].head) {
-      mlfq.L[level].head = p->next;
-      if(mlfq.L[level].head->next) mlfq.L[level].head->next->prev = mlfq.L[level].head; //check for nullptr
-    } else if(p == mlfq.L[level].tail) {
-      mlfq.L[level].tail = p->prev;
-      if(mlfq.L[level].tail) mlfq.L[level].tail->next = 0;
-    } else {
-      if(p->prev) {
-        p->prev->next = p->next;
-      }
-      if(p->next) {
-        p->next->prev = p->prev;
-      }
-    }
-
-    p->prev = 0;
-    p->next = 0; //When demoted, the process must attach to the tail.
-
-
-    //release(&mlfq.lock);
-    release(&ptable.lock);
-    acquire(&mlfq_tick.lock);
-    mlfq_tick.global_tick = 0;
-    release(&mlfq_tick.lock);
-  }
-  else{ ///error message and kill, as required by the assignment.
-    cprintf("Password is incorrect or scheduler is already locked.\n");
-        cprintf("pid = %d, time quantum = %u, current queue level = %d\n",
-      p->pid, p->q[p->q_number], p->q_number);
-    exit();
-  }
-}
-
-// Must be called only by schedulerUnlock() or MLFQreset()
-// ptable.lock must be held
-void schedulerUnlockChecked() {
-    mlfq.isLocked = 0;
-
-    //reset priority and queue number, as DOS does.
-    mlfq.urgent_process->priority = 3;
     int i = 0;
-    for(i = 0; i < NUM_QUEUES; i++) {
-      mlfq.urgent_process->q[i] = 0;
+    for(i = 0; i < MAXARG && argv[i] != 0; i++) {
+      curproc->tcb.parentProc->execParam.argv[i] = argv[i]; //deep copy params
     }
-    //mlfq.urgent_process->q_ticks = 0;
-    //urgent process to the head of L0
-    mlfq.urgent_process->q_number = 0;
-    //if L0 is not empty, then urgent process is the head of L0.
-    if(mlfq.L[0].head) {
-      mlfq.urgent_process->prev = 0;
-      mlfq.urgent_process->next = mlfq.L[0].head;
-      mlfq.L[0].head->prev = mlfq.urgent_process;
-      mlfq.L[0].head = mlfq.urgent_process;
-    }
-    else { //Create an empty queue. I highly doubt this will ever happen.
-      mlfq.L[0].head = mlfq.urgent_process;
-      mlfq.L[0].tail = mlfq.urgent_process;
-      mlfq.urgent_process->prev = 0;
-      mlfq.urgent_process->next = 0;
-    }
-    mlfq.urgent_process = 0; //nullptr
+    curproc->tcb.parentProc->execParam.argv[i] = 0;
+    //curproc->tcb.parentProc->execParam.argv = argv;
+
+    if(curproc->tcb.parentProc->state == SLEEPING)
+      curproc->tcb.parentProc->state = RUNNABLE;
+    curproc->state = SLEEPING;
+    //procdump();
+    //cprintf("exec_remove_thread> pid: %d calling sched\n", curproc->pid);
+    sched();
+    release(&ptable.lock);
+  }
+  return 0;
 }
 
-void schedulerUnlock(int password) {
-  struct proc* p = myproc();
+void killHandler() {
+  struct proc* curproc = myproc();
+  struct proc* p;
 
-  //if password is correct, unlock the scheduler.
-  //Also check if the scheduler is already unlocked.
+  //cprintf("killHandler> pid: %d killed: %d type: %d\n", curproc->pid, curproc->killed, curproc->tcb.threadtype);
 
-  if(password == SCHEDULER_LOCK_PASSWORD && mlfq.isLocked && mlfq.urgent_process == p) {
-    //To-Dos:
-    //reset global tick counter -> done uncomment to use, April 12nd 2023
-    acquire(&ptable.lock);
-    schedulerUnlockChecked();
-    release(&ptable.lock);
-
-    //Uncomment this when you want to reset the global tick counter.
-/*     acquire(&mlfq_tick.lock);
-    mlfq_tick.global_tick = 0;
-    release(&mlfq_tick.lock); */
+  if(curproc->tcb.threadtype == T_THREAD) {
+    thread_exit(0);
   }
-  else{ //error message
-    if(password != SCHEDULER_LOCK_PASSWORD) {
-      cprintf("Password is incorrect.\n");
-    }
-    if(!mlfq.isLocked) {
-      cprintf("Scheduler is already unlocked.\n");
-    }
-    else if(p != mlfq.urgent_process) {
-      cprintf("Only the urgent process can unlock the scheduler. (%d trying to unlock scheduler for %d) \n", p->pid, mlfq.urgent_process->pid);
+  else if(curproc->tcb.threadtype == T_MAIN){
+    if(curproc->killed == 3) { // main은 정리 안하고, thread만 종료. 자식 thread가 exec 실행했을 때
+      //cprintf("killHandler> pid: %d exec routine\n", curproc->pid);
+      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+        if(p->parent == curproc) {
+          if(p->tcb.threadtype == T_THREAD) {
+            //cnt++;
+            kill(p->pid);
+            //cprintf("killed thread: %d\n", p->pid);
+            thread_join(p->pid, 0);
+            //cprintf("joined thread: %d\n", p->pid);
+          }
+        }
+      }
+      //정리 완료, exec 시작
+      curproc->killed = 0;
+      //cprintf("killHandler> pid: %d exec start\n", curproc->pid);
+      exec(curproc->execParam.path, curproc->execParam.argv);
 
     }
-    cprintf("pid = %d, time quantum = %u, current queue level = %d\n",
-      p->pid, p->q[p->q_number], p->q_number);
-    exit();
+    else{ 
+      // killed == 1: trap이 kill
+      // killed == 2: 기존의 kill = 1 대체, trap이 kill일 때만 1
+      exit();
+    }
+  } 
+  else {
+    panic("killHandler> not a thread or main");
   }
+  return;
 }

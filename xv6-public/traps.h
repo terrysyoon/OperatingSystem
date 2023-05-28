@@ -36,7 +36,3 @@
 #define IRQ_ERROR       19
 #define IRQ_SPURIOUS    31
 
-
-//MLFQ Lock/Unlock
-#define T_MLFQLOCK 129
-#define T_MLFQUNLOCK 130

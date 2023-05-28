@@ -20,11 +20,12 @@
 #define SYS_link   19
 #define SYS_mkdir  20
 #define SYS_close  21
-#define SYS_myfunction 22 //Mar 21st 2023
 
-/*Syscalls for MLFQ*/
-#define SYS_yield 23
-#define SYS_getLevel 24
-#define SYS_setPriority 25
-#define SYS_lock 26
-#define SYS_unlock 27
+/*ELE3021 Project#2 Syscalls*/
+#define SYS_setmemorylimit 22
+#define SYS_pmanagerList 23
+#define SYS_exec2 24
+#define SYS_procdump 25
+#define SYS_thread_create 26
+#define SYS_thread_join 27
+#define SYS_thread_exit 28

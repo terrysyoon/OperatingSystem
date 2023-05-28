@@ -1,6 +1,4 @@
-
-
-//#define __DEBUG_0416__
+#include "pthread.h"
 
 struct buf;
 struct context;
@@ -193,21 +191,17 @@ void            clearpteu(pde_t *pgdir, char *uva);
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
 
-//proc_new.c
-void lookQueue(void);
-void MLFQinit(void);
-void MLFQreset();
-int getLevel(void);
-void setPriority(int, int);
-void schedulerLock(int);
-void schedulerUnlockChecked();
-void schedulerUnlock(int);
+//ELE3021 Project#2
+int exec2(char *path, char **argv, int stacksize); //in exec.c
+int setmemorylimit(int pid, int limit); //in proc.c
+void pmanagerList(void); //in proc.c
 
-//prac_syscall.c
-int             myfunction(char*);
+int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg); //in proc.c
+void thread_exit(void *retval); // in proc.c
+int thread_join(thread_t thread, void **retval); // in proc.c
 
-//mlfq_test.c
-int fork_children(void);
-int fork_children2(void);
-int fork_children3(void);
-void exit_children(void);
+int exec_remove_thread(char *path, char **argv); //in proc.c
+void killHandler(void); //in proc.c, meant to be used in trap.c when a process is killed
+int growproc_thread(int);
+
+int kill_parentProc(int); //in proc.c

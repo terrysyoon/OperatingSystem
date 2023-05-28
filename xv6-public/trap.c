@@ -14,8 +14,6 @@ extern uint vectors[];  // in vectors.S: array of 256 entry pointers
 struct spinlock tickslock;
 uint ticks;
 
-extern struct MLFQ_TICK mlfq_tick;
-
 void
 tvinit(void)
 {
@@ -24,8 +22,6 @@ tvinit(void)
   for(i = 0; i < 256; i++)
     SETGATE(idt[i], 0, SEG_KCODE<<3, vectors[i], 0);
   SETGATE(idt[T_SYSCALL], 1, SEG_KCODE<<3, vectors[T_SYSCALL], DPL_USER);
-  SETGATE(idt[T_MLFQLOCK], 1, SEG_KCODE<<3, vectors[T_MLFQLOCK], DPL_USER);
-  SETGATE(idt[T_MLFQUNLOCK], 1, SEG_KCODE<<3, vectors[T_MLFQUNLOCK], DPL_USER);
 
   initlock(&tickslock, "time");
 }
@@ -41,14 +37,14 @@ void
 trap(struct trapframe *tf)
 {
   if(tf->trapno == T_SYSCALL){
-    //cprintf("syscall: %d\n", myproc()->pid);
-    //panic("DEBUG: syscalled | DUMMY PANIC");
     if(myproc()->killed)
-      exit();
+      //exit();
+      killHandler();
     myproc()->tf = tf;
     syscall();
     if(myproc()->killed)
-      exit();
+      //exit();
+      killHandler();
     return;
   }
 
@@ -59,19 +55,6 @@ trap(struct trapframe *tf)
       ticks++;
       wakeup(&ticks);
       release(&tickslock);
-      //cprintf("Timeout! \n");
-      //procdump();
-      // MLFQ
-      //acquire(&mlfq_tick.lock);
-      mlfq_tick.global_tick++;
-      //wakeup(&mlfq_tick.global_tick);
-      //release(&mlfq_tick.lock);
-      if(mlfq_tick.global_tick % 100 == 0){
-        //cprintf("global_tick: %d\n", mlfq_tick.global_tick);
-        //panic("100tick");
-        //procdump();
-        MLFQreset();
-      }
     }
     lapiceoi();
     break;
@@ -97,25 +80,12 @@ trap(struct trapframe *tf)
     lapiceoi();
     break;
 
-  case T_MLFQLOCK:
-    schedulerLock(SCHEDULER_LOCK_PASSWORD);
-    //lapiceoi();
-    break;
-
-  case T_MLFQUNLOCK:
-    schedulerUnlock(SCHEDULER_LOCK_PASSWORD);
-    //lapiceoi();
-    break;
-
   //PAGEBREAK: 13
   default:
     if(myproc() == 0 || (tf->cs&3) == 0){
       // In kernel, it must be our mistake.
-      if(myproc() == 0) cprintf("my proc fualt");
       cprintf("unexpected trap %d from cpu %d eip %x (cr2=0x%x)\n",
               tf->trapno, cpuid(), tf->eip, rcr2());
-      procdump();
-      lookQueue();
       panic("trap");
     }
     // In user space, assume process misbehaved.
@@ -130,7 +100,8 @@ trap(struct trapframe *tf)
   // (If it is still executing in the kernel, let it keep running
   // until it gets to the regular system call return.)
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
-    exit();
+    //exit();
+    killHandler();
 
   // Force process to give up CPU on clock tick.
   // If interrupts were on while locks held, would need to check nlock.
@@ -140,5 +111,6 @@ trap(struct trapframe *tf)
 
   // Check if the process has been killed since we yielded
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
-    exit();
+    //exit();
+    killHandler();
 }

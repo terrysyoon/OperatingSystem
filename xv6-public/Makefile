@@ -1,4 +1,3 @@
-#proc.o -> proc_new.o
 OBJS = \
 	bio.o\
 	console.o\
@@ -28,8 +27,7 @@ OBJS = \
 	uart.o\
 	vectors.o\
 	vm.o\
-	prac_syscall.o\
-	mlfq_syscall.o\
+	ELE3021_proj2_syscall.o\
 
 # Cross-compiling (e.g., on Mac OS X)
 # TOOLPREFIX = i386-jos-elf
@@ -183,9 +181,15 @@ UPROGS=\
 	_stressfs\
 	_wc\
 	_zombie\
-	_prac_myuserapp\
-	_myapp\
-	_mlfq_test\
+	_pmanager\
+	_uprocdump\
+	_hello_thread\
+	_thread_exec\
+	_thread_exit\
+	_thread_kill\
+	_thread_test\
+	_pthreadtest\
+	_dummyProc\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -255,9 +259,18 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
 EXTRA=\
 	mkfs.c ulib.c user.h cat.c echo.c forktest.c grep.c kill.c\
 	ln.c ls.c mkdir.c rm.c stressfs.c wc.c zombie.c\
-	printf.c umalloc.c _prac_myuserapp.c _myapp.c mlfq_test.c\
+	printf.c umalloc.c\
 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
 	.gdbinit.tmpl gdbutil\
+	pmanager.c\
+	uprocdump.c\
+	hello_thread.c\
+	thread_exec.c\
+	thread_exit.c\
+	thread_kill.c\
+	thread_test.c\
+	pthreadtest.c\
+	dummyProc.c\
 
 dist:
 	rm -rf dist

@@ -1,3 +1,5 @@
+#include "pthread.h"
+
 struct stat;
 struct rtcdate;
 
@@ -23,17 +25,6 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
-int myfunction(char*); //Mar 21st 2023
-
-// new procs
-void lookQueue(void);
-void MLFQinit(void);
-void MLFQreset();
-int getLevel();
-void setPriority(int, int);
-void schedulerLock(int);
-void schedulerUnlockChecked();
-void schedulerUnlock(int);
 
 // ulib.c
 int stat(const char*, struct stat*);
@@ -41,6 +32,7 @@ char* strcpy(char*, const char*);
 void *memmove(void*, const void*, int);
 char* strchr(const char*, char c);
 int strcmp(const char*, const char*);
+int strncmp(const char*, const char*, uint);
 void printf(int, const char*, ...);
 char* gets(char*, int max);
 uint strlen(const char*);
@@ -48,3 +40,13 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+
+/* ELE3021 Project#2 Syscalls */
+int setmemorylimit(int, int);
+void pmanagerList(void);
+int exec2(char*, char**, int);
+void procdump(void);
+
+int thread_create(thread_t *, void *(*)(void *), void *);
+void thread_exit(void *);
+int thread_join(thread_t, void **);
