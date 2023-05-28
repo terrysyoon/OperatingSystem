@@ -685,7 +685,7 @@ pmanagerList(void) {
 
   //acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    if(p->state == UNUSED)
+    if(!((p->state == RUNNING || p->state == RUNNABLE || p->state == SLEEPING) && p->tcb.threadtype == T_MAIN)) // 세 조건 중 하나 & main thread 만 출력
       continue;
 
     if(p->state >= 0 && p->state < NELEM(states) && states[p->state])
@@ -693,19 +693,9 @@ pmanagerList(void) {
     else
       state = "???";
     
-    uint pages = (PGROUNDUP(p->stackSize));
-    cprintf("%s %d %s %d %d %d\n", p->name, p->pid, state, pages, p->sz, p->memorylimit);
-  /*
-    uint pc[10];
-    int i;
-    if(p->state == SLEEPING){
-      getcallerpcs((uint*)p->context->ebp+2, pc);
-      for(i=0; i<10 && pc[i] != 0; i++)
-        cprintf(" %p", pc[i]);
-    }*/
+    cprintf("%s %d %s %d %d %d\n", p->name, p->pid, state, p->stackSize, p->sz, p->memorylimit);
     cprintf("\n");
   }
-  //release(&ptable.lock);
 }
 
 int thread_create(thread_t *thread, void *(*start_routine)(void *), void *arg) { //fork 후 stack만 다시 할당. context는 start_routine으로 변경 필요(PC)
