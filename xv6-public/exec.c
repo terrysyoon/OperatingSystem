@@ -242,6 +242,8 @@ int exec2(char *path, char **argv, int stacksize) {
   curproc->sz = sz;
   curproc->tf->eip = elf.entry;  // main
   curproc->tf->esp = sp;
+
+  curproc->stackSize = stacksize;
   switchuvm(curproc);
   freevm(oldpgdir);
   return 0;
