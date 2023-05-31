@@ -22,7 +22,8 @@ struct inode {
   short minor;
   short nlink;
   uint size;
-  uint addrs[NDIRECT+1];
+  //uint addrs[NDIRECT+1]; //fs.c에서만 사용
+  uint addrs[TINDIRECTIDX+1]; //proj3
 };
 
 // table mapping major device number to
