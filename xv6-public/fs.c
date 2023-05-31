@@ -662,6 +662,7 @@ dirlookup(struct inode *dp, char *name, uint *poff)
       panic("dirlookup read");
     if(de.inum == 0)
       continue;
+    cprintf("name: %s dename: %s\n", name, de.name);
     if(namecmp(name, de.name) == 0){
       // entry matches path element
       if(poff)
