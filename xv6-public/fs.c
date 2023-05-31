@@ -401,73 +401,98 @@ bmap(struct inode *ip, uint bn) // 몇 번째 블럭 가져올지
   */
 
   uint addr, *a;
-  struct buf *bp1, *bp2, *bp3; //triple indirect때는 bp3까지 사용
+  struct buf *bp; //triple indirect때는 bp3까지 사용
 
-  //0~16383 block은 여기서 주고 return
+  if(bn < NDIRECT){
+    if((addr = ip->addrs[bn]) == 0)
+      ip->addrs[bn] = addr = balloc(ip->dev);
+    return addr;
+  }
+  bn -= NDIRECT;
+
+  //single
+  if(bn < NINDIRECT){
+    // Load indirect block, allocating if necessary.
+    if((addr = ip->addrs[NDIRECT]) == 0)
+      ip->addrs[NDIRECT] = addr = balloc(ip->dev);
+    bp = bread(ip->dev, addr);
+    a = (uint*)bp->data;
+    if((addr = a[bn]) == 0){
+      a[bn] = addr = balloc(ip->dev);
+      log_write(bp);
+    }
+    brelse(bp);
+    return addr;
+  }
+
+  //double: 0~16383 block은 여기서 주고 return
   if(bn < N2INDIRECT) { 
 
     if((addr = ip->addrs[DINDIRECTIDX]) == 0) {
       ip->addrs[DINDIRECTIDX] = addr = balloc(ip->dev);
     }
-    bp1 = bread(ip->dev, addr); //double indirect block read
-    a = (uint*)bp1->data;
-
+    bp = bread(ip->dev, addr); //double indirect block read
+    a = (uint*)bp->data;
 
 
     if((addr = a[bn/NINDIRECT]) == 0) { // 중간(2차) indirect block이 없으면 
       a[bn/NINDIRECT] = addr = balloc(ip->dev);
-      log_write(bp1);
+      log_write(bp);
     }
-    brelse(bp1);
-    bp2 = bread(ip->dev, addr); //2차 indirect block read
-    a = (uint*)bp2->data;
+    brelse(bp);
 
+
+    bp = bread(ip->dev, addr); //2차 indirect block read
+    a = (uint*)bp->data;
 
 
     if((addr = a[bn%NINDIRECT]) == 0) { // target block이 없으면
       a[bn%NINDIRECT] = addr = balloc(ip->dev);
-      log_write(bp2);
+      log_write(bp);
     }
-    brelse(bp2);
+    brelse(bp);
     return addr;
   }
-  bn -= N2INDIRECT;
+  
+  //bn -= N2INDIRECT;
 
   if(bn < N3INDIRECT) {
 
     if((addr = ip->addrs[TINDIRECTIDX]) == 0) { // 맨 바깥(1차) triple indirect block이 없으면
       ip->addrs[TINDIRECTIDX] = addr = balloc(ip->dev);
     }
-    bp1 = bread(ip->dev, addr); //1차 indirect block read
-    a = (uint*)bp1->data;
+    bp = bread(ip->dev, addr); //1차 indirect block read
+    a = (uint*)bp->data;
 
 
 
     if((addr = a[bn/N2INDIRECT]) == 0) { // 중간(2차) indirect block이 없으면 
       a[bn/N2INDIRECT] = addr = balloc(ip->dev);
-      log_write(bp1);
+      log_write(bp);
     }
-    brelse(bp1);
-    bp2 = bread(ip->dev, addr); //2차 indirect block read
-    a = (uint*)bp2->data;
+    brelse(bp);
+    bn = bn % N2INDIRECT;
+    bp = bread(ip->dev, addr); //2차 indirect block read
+    a = (uint*)bp->data;
 
 
 
-    if((addr = a[(bn%N2INDIRECT)/NDIRECT]) == 0) {
-      a[(bn%N2INDIRECT)/NDIRECT] = addr = balloc(ip->dev);
-      log_write(bp2);
+
+    if((addr = a[bn/NINDIRECT]) == 0) {
+      a[(bn)/NINDIRECT] = addr = balloc(ip->dev);
+      log_write(bp);
     }
-    brelse(bp2);
-    bp3 = bread(ip->dev, addr); //3차 indirect block read
-    a = (uint*)bp3->data;
+    brelse(bp);
+    bp = bread(ip->dev, addr); //3차 indirect block read
+    a = (uint*)bp->data;
 
 
 
-    if((addr = a[bn%NDIRECT]) == 0) { 
-      a[bn%NDIRECT] = addr = balloc(ip->dev);
-      log_write(bp3);
+    if((addr = a[bn%NINDIRECT]) == 0) { 
+      a[bn%NINDIRECT] = addr = balloc(ip->dev);
+      log_write(bp);
     }
-    brelse(bp3);
+    brelse(bp);
     return addr;
   }
 
@@ -662,7 +687,7 @@ dirlookup(struct inode *dp, char *name, uint *poff)
       panic("dirlookup read");
     if(de.inum == 0)
       continue;
-    cprintf("name: %s dename: %s\n", name, de.name);
+    //cprintf("name: %s dename: %s\n", name, de.name);
     if(namecmp(name, de.name) == 0){
       // entry matches path element
       if(poff)
