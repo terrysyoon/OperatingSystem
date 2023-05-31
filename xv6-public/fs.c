@@ -670,7 +670,7 @@ dirlookup(struct inode *dp, char *name, uint *poff)
       return iget(dp->dev, inum);
     }
   }
-
+  cprintf("dirlookup fail\n");
   return 0;
 }
 
