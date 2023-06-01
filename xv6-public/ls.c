@@ -43,7 +43,12 @@ ls(char *path)
 
   switch(st.type){
   case T_FILE:
-    printf(1, "%s %d %d %d\n", fmtname(path), st.type, st.ino, st.size);
+    if(st.type == T_SYMLINK) {
+      printf(1, "SYMLINK: %s %d %d %d\n", fmtname(path), st.type, st.ino, st.size);
+    }else{
+      printf(1, "%s %d %d %d\n", fmtname(path), st.type, st.ino, st.size); //original print
+    }
+   
     break;
 
   case T_DIR:
