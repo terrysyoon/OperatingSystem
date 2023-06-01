@@ -164,120 +164,7 @@ bad:
   return -1;
 }
 
-int sys_symlink(void)
-{
-  char *linkTo, *linkPath;
-  struct inode *ip; // symlink의 inode
-  struct file * f; // symlink의 file
 
-  if (argstr(0, &linkTo) < 0 || argstr(1, &linkPath) < 0)
-    return -1;
-
-  if(strlen(linkTo) > sizeof((*(ip->addrs))*NELEM(ip->addrs))) // symlink의 target이 너무 길면
-  {
-    cprintf("symlink: too long linkTo\n");
-    return -1;
-  }
-
-  begin_op();
-  if ((ip = namei(linkPath)) == 0) // 이미 symlink의 이름이 사용중이면
-  {
-    end_op();
-    return -1;
-  }
-  if((ip = create(linkPath, T_SYMLINK, 0, 0)) == 0){ // symlink inode 생성
-    //실패 시
-    end_op();
-    return -1;
-  } 
-  ip->isSymlink = 1;
-  end_op();
-  
-  /* Symlink는 nlink와 관계 없고, DIR로 link 가능.
-  if (ip->type == T_DIR)
-  {
-    iunlockput(ip);
-    end_op();
-    return -1;
-  }*/
-  /*ip->nlink++;
-  iupdate(ip);
-  iunlock(ip);*/
-
-
-/*
-  if ((dp = nameiparent(new, name)) == 0)
-    goto bad;
-  ilock(dp);
-  if (dp->dev != ip->dev || dirlink(dp, name, ip->inum) < 0)
-  {
-    iunlockput(dp);
-    goto bad;
-  }
-  iunlockput(dp);
-  iput(ip);
-
-  end_op();
-
-  bad:
-  ilock(ip);
-  ip->nlink--;
-  iupdate(ip);
-  iunlockput(ip);
-  end_op();
-  return -1;*/
-
-  if ((f = filealloc()) == 0)
-  {
-    if(f) {
-      fileclose(f); //열리다 말았으면 닫기.
-    }
-    iunlockput(ip);
-    return -1;
-  }
-
-  safestrcpy((char*)ip->addrs, linkTo, sizeof((*(ip->addrs))*NELEM(ip->addrs))); // symlink의 target을 저장
-  iunlock(ip);
-
-  f->readable = 1;
-  f->writable = 0; //readonly
-  f->ip = ip;
-  f->off = 0;
-}
-
-// symlinnk pathname에 저장된 symlink의 linkTo를 path에 저장
-int sys_lookSymlink(void)
-{
-  char *symlinkPath;
-  char *path;
-  int n;
-
-  if(argstr(0, &symlinkPath) < 0 || argstr(1, &path) < 0 || argint(2, &n)) {
-    cprinf("sys_lookSymlink: parse error\n");
-    return -1;
-  }
-  else {
-    return lookSymlink(symlinkPath, path, n);
-  }
-}
-
-int lookSymlink(char* symlinkPath, char* path, int n) {
-  struct inode *ip;
-  if((ip = namei(symlinkPath)) == 0) {
-    cprintf("lookSymlink: no file found with %s", symlinkPath);
-    return -1;
-  }
-  ilock(ip);
-  if(ip->isSymlink) {
-    safestrcpy(path, (char*)ip->addrs, n);
-    iunlock(ip);
-    return 0;
-  }
-
-  cprintf("lookSymlink: not a symlink! %s\n", symlinkPath);
-  iunlock(ip);
-  return -1;
-}
 
 // Is the directory dp empty except for "." and ".." ?
 static int
@@ -558,4 +445,121 @@ sys_pipe(void)
   fd[0] = fd0;
   fd[1] = fd1;
   return 0;
+}
+
+int sys_symlink(void)
+{
+  char *linkTo, *linkPath;
+  struct inode *ip; // symlink의 inode
+  struct file * f; // symlink의 file
+
+  if (argstr(0, &linkTo) < 0 || argstr(1, &linkPath) < 0)
+    return -1;
+
+  if(strlen(linkTo) > sizeof((*(ip->addrs))*NELEM(ip->addrs))) // symlink의 target이 너무 길면
+  {
+    cprintf("symlink: too long linkTo\n");
+    return -1;
+  }
+
+  begin_op();
+  if ((ip = namei(linkPath)) == 0) // 이미 symlink의 이름이 사용중이면
+  {
+    end_op();
+    return -1;
+  }
+  if((ip = create(linkPath, T_SYMLINK, 0, 0)) == 0){ // symlink inode 생성
+    //실패 시
+    end_op();
+    return -1;
+  } 
+  ip->isSymlink = 1;
+  end_op();
+  
+  /* Symlink는 nlink와 관계 없고, DIR로 link 가능.
+  if (ip->type == T_DIR)
+  {
+    iunlockput(ip);
+    end_op();
+    return -1;
+  }*/
+  /*ip->nlink++;
+  iupdate(ip);
+  iunlock(ip);*/
+
+
+/*
+  if ((dp = nameiparent(new, name)) == 0)
+    goto bad;
+  ilock(dp);
+  if (dp->dev != ip->dev || dirlink(dp, name, ip->inum) < 0)
+  {
+    iunlockput(dp);
+    goto bad;
+  }
+  iunlockput(dp);
+  iput(ip);
+
+  end_op();
+
+  bad:
+  ilock(ip);
+  ip->nlink--;
+  iupdate(ip);
+  iunlockput(ip);
+  end_op();
+  return -1;*/
+
+  if ((f = filealloc()) == 0)
+  {
+    if(f) {
+      fileclose(f); //열리다 말았으면 닫기.
+    }
+    iunlockput(ip);
+    return -1;
+  }
+
+  safestrcpy((char*)ip->addrs, linkTo, sizeof((*(ip->addrs))*NELEM(ip->addrs))); // symlink의 target을 저장
+  iunlock(ip);
+
+  f->readable = 1;
+  f->writable = 0; //readonly
+  f->ip = ip;
+  f->off = 0;
+
+  return 0;
+}
+
+// symlinnk pathname에 저장된 symlink의 linkTo를 path에 저장
+int sys_lookSymlink(void)
+{
+  char *symlinkPath;
+  char *path;
+  int n;
+
+  if(argstr(0, &symlinkPath) < 0 || argstr(1, &path) < 0 || argint(2, &n)) {
+    cprintf("sys_lookSymlink: parse error\n");
+    return -1;
+  }
+  else {
+    return lookSymlink(symlinkPath, path, n);
+  }
+}
+
+int lookSymlink(char* symlinkPath, char* path, int n) {
+  struct inode *ip;
+  if((ip = namei(symlinkPath)) == 0) {
+    cprintf("lookSymlink: no file found with %s", symlinkPath);
+    return -1;
+  }
+  ilock(ip);
+  if(ip->isSymlink) {
+    safestrcpy(path, (char*)ip->addrs, n);
+    iunlock(ip);
+    return 0;
+  }
+
+  cprintf("lookSymlink: not a symlink! %s\n", symlinkPath);
+  iunlock(ip);
+  return -1;
 }
