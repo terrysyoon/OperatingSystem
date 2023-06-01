@@ -68,7 +68,11 @@ ls(char *path)
         printf(1, "ls: cannot stat %s\n", buf);
         continue;
       }
-      printf(1, "%s %d %d %d\n", fmtname(buf), st.type, st.ino, st.size);
+      if(st.type == T_SYMLINK) {
+        printf(1, "SYMLINK: %s -> %s %d %d %d\n", fmtname(path), fmtname(st.symlinkTo), st.type, st.ino, st.size);
+      }else{
+        printf(1, "%s %d %d %d\n", fmtname(path), st.type, st.ino, st.size); //original print
+      }
     }
     break;
   }
