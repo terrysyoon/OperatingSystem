@@ -210,6 +210,8 @@ sys_unlink(void)
     goto bad;
   ilock(ip);
 
+  cprintf("found file to unlink: %d isSymlink %d\n", ip->inum, ip->isSymlink);
+
   if(ip->nlink < 1)
     panic("unlink: nlink < 1");
   if(ip->type == T_DIR && !isdirempty(ip)){ // 안 빈 폴더는 지울 수 없다.
