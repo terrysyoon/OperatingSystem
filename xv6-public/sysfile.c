@@ -306,7 +306,7 @@ sys_open(void)
       return -1;
     }
   } else {
-    if((ip = namei(path)) == 0){
+    if((ip = namei(path)) == 0){ //
       end_op();
       return -1;
     }
@@ -523,7 +523,7 @@ int sys_symlink(void)
     return -1;
   }
 
-  safestrcpy((char*)ip->addrs, linkTo, sizeof((*(ip->addrs))*NELEM(ip->addrs))); // symlink의 target을 저장
+  safestrcpy((char*)ip->addrs, linkTo, sizeof(ip->addrs)); // symlink의 target을 저장
   iunlock(ip);
 
   f->readable = 1;
