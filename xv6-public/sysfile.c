@@ -211,6 +211,16 @@ sys_unlink(void)
   ilock(ip);
 
   cprintf("found file to unlink: %d isSymlink %d\n", ip->inum, ip->isSymlink);
+  if(ip->isSymlink){ // symbolic link면
+  /*
+    ip->nlink--;
+    iupdate(ip);
+    iunlockput(ip);
+    iunlockput(dp);
+    end_op();
+    return 0;*/
+    memset(&(ip->addrs), 0, sizeof(ip->addrs)); // symbolic link면 data block을 0으로 채워서 지운다.
+  }
 
   if(ip->nlink < 1)
     panic("unlink: nlink < 1");
