@@ -21,7 +21,7 @@ exec(char *path, char **argv)
 
   begin_op();
 
-  if((ip = namei(path)) == 0){
+  if((ip = namei(path, 1)) == 0){
     end_op();
     cprintf("exec: fail\n");
     return -1;

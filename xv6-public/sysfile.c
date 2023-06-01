@@ -125,7 +125,7 @@ sys_link(void)
     return -1;
 
   begin_op();
-  if((ip = namei(old)) == 0){
+  if((ip = namei(old,0)) == 0){ //이거 0 맞나
     end_op();
     return -1;
   }
@@ -141,7 +141,7 @@ sys_link(void)
   iupdate(ip);
   iunlock(ip);
 
-  if((dp = nameiparent(new, name)) == 0)
+  if((dp = nameiparent(new, name, 0)) == 0) //이거 0 맞나
     goto bad;
   ilock(dp);
   if(dp->dev != ip->dev || dirlink(dp, name, ip->inum) < 0){
@@ -195,7 +195,7 @@ sys_unlink(void)
     return -1;
 
   begin_op();
-  if((dp = nameiparent(path, name)) == 0){
+  if((dp = nameiparent(path, name, 0)) == 0){
     end_op();
     return -1;
   }
@@ -246,7 +246,7 @@ create(char *path, short type, short major, short minor)
   struct inode *ip, *dp;
   char name[DIRSIZ];
 
-  if((dp = nameiparent(path, name)) == 0)
+  if((dp = nameiparent(path, name, 1)) == 0)
     return 0;
   ilock(dp);
 
@@ -306,7 +306,7 @@ sys_open(void)
       return -1;
     }
   } else {
-    if((ip = namei(path)) == 0){ //
+    if((ip = namei(path,1)) == 0){ //
       end_op();
       return -1;
     }
@@ -380,7 +380,7 @@ sys_chdir(void)
   struct proc *curproc = myproc();
   
   begin_op();
-  if(argstr(0, &path) < 0 || (ip = namei(path)) == 0){
+  if(argstr(0, &path) < 0 || (ip = namei(path, 1)) == 0){
     end_op();
     return -1;
   }
@@ -464,7 +464,7 @@ int sys_symlink(void)
   }
 
   begin_op();
-  if ((ip = namei(linkPath)) != 0) // 이미 symlink의 이름이 사용중이면
+  if ((ip = namei(linkPath,0)) != 0) // 이미 symlink의 이름이 사용중이면
   {
     end_op();
     cprintf("symlink: name in use\n");
@@ -557,7 +557,7 @@ int sys_lookSymlink(void)
 
 int lookSymlink(char* symlinkPath, char* path, int n) {
   struct inode *ip;
-  if((ip = namei(symlinkPath)) == 0) {
+  if((ip = namei(symlinkPath,0)) == 0) {
     cprintf("lookSymlink: no file found with %s", symlinkPath);
     return -1;
   }

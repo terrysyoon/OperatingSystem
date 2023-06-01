@@ -775,7 +775,7 @@ skipelem(char *path, char *name)
 // path element into name, which must have room for DIRSIZ bytes.
 // Must be called inside a transaction since it calls iput().
 static struct inode*
-namex(char *path, int nameiparent, char *name)
+namex(char *path, int nameiparent, char *name, int findRealfile)
 {
   struct inode *ip, *next;
   char symlinkTo[200];
@@ -806,7 +806,7 @@ namex(char *path, int nameiparent, char *name)
     iunlock(ip);
     ilock(next);
 
-    if(next->type == T_SYMLINK) { //Symlink면 다시 열기 시작
+    if(next->type == T_SYMLINK && findRealfile) { //Symlink면 다시 열기 시작
     /*
       if(next->size > sizeof(symlinkTo) || readi(next, symlinkTo, 0, next->size) != next->size) { //path가 너무 길면
         iunlockput(next);
@@ -816,7 +816,7 @@ namex(char *path, int nameiparent, char *name)
       safestrcpy(symlinkTo, (char*)next->addrs, sizeof(next->addrs));
       iunlockput(next);
       cprintf("namex: symlinkTo: %s\n", symlinkTo);
-      return namex(symlinkTo, nameiparent, name);
+      return namex(symlinkTo, nameiparent, name, findRealfile);
     }
     else {
       iunlock(next); //기존에는 next를 안열었다.
@@ -837,14 +837,14 @@ namex(char *path, int nameiparent, char *name)
 }
 
 struct inode*
-namei(char *path)
+namei(char *path, int findRealfile)
 {
   char name[DIRSIZ];
-  return namex(path, 0, name);
+  return namex(path, 0, name, findRealfile);
 }
 
 struct inode*
-nameiparent(char *path, char *name)
+nameiparent(char *path, char *name, int findRealfile)
 {
-  return namex(path, 1, name);
+  return namex(path, 1, name, findRealfile);
 }
