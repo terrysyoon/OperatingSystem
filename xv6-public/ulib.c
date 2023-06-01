@@ -73,7 +73,7 @@ stat(const char *n, struct stat *st)
   int fd;
   int r;
 
-  fd = open(n, O_RDONLY);
+  fd = openSymlinkFile(n, O_RDONLY, 0); //ls가 여기서 open을 호출함. real file 읽어옴.. -> stat은 symlink file 읽기
   if(fd < 0)
     return -1;
   r = fstat(fd, st);

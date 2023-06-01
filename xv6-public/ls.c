@@ -30,7 +30,7 @@ ls(char *path)
   struct dirent de;
   struct stat st;
 
-  if((fd = open(path, 0)) < 0){
+  if((fd = openSymlinkFile(path, 0, 0)) < 0){ // real file 읽어옴 -> symlink 읽기
     printf(2, "ls: cannot open %s\n", path);
     return;
   }
