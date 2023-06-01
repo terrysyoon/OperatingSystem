@@ -597,7 +597,9 @@ stati(struct inode *ip, struct stat *st)
   st->nlink = ip->nlink;
   st->size = ip->size;
 
-  safestrcpy(st->symlinkTo, (char*)ip->addrs, sizeof(ip->addrs)); //추가
+  if(ip->type == T_SYMLINK) {
+    safestrcpy(st->symlinkTo, (char*)ip->addrs, sizeof(ip->addrs)); //추가
+  }
 }
 
 //PAGEBREAK!
