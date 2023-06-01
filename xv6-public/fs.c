@@ -815,6 +815,7 @@ namex(char *path, int nameiparent, char *name)
       }*/
       safestrcpy(symlinkTo, (char*)next->addrs, sizeof((*(next->addrs))*NELEM(next->addrs)));
       iunlockput(next);
+      cprintf("namex: symlinkTo: %s\n", symlinkTo);
       return namex(symlinkTo, nameiparent, name);
     }
     else {
