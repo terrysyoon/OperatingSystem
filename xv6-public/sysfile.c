@@ -60,7 +60,7 @@ sys_dup(void)
 
   if(argfd(0, 0, &f) < 0)
     return -1;
-  if((fd=fdalloc(f)) < 0)
+  if((fd=fdalloc(f)) < 0) // file descriptor 하나만 더 추가.
     return -1;
   filedup(f);
   return fd;
@@ -73,7 +73,7 @@ sys_read(void)
   int n;
   char *p;
 
-  if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argptr(1, &p, n) < 0)
+  if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argptr(1, &p, n) < 0) // argfd: 이 프로세스에 fd로 열린 파일 있는지도 확인
     return -1;
   return fileread(f, p, n);
 }
@@ -131,7 +131,7 @@ sys_link(void)
   }
 
   ilock(ip);
-  if(ip->type == T_DIR){
+  if(ip->type == T_DIR){ // 디렉토리에 대해서는 link를 할 수 없다.
     iunlockput(ip);
     end_op();
     return -1;
@@ -164,6 +164,121 @@ bad:
   return -1;
 }
 
+int sys_symlink(void)
+{
+  char *linkTo, *linkPath;
+  struct inode *ip; // symlink의 inode
+  struct file * f; // symlink의 file
+
+  if (argstr(0, &linkTo) < 0 || argstr(1, &linkPath) < 0)
+    return -1;
+
+  if(strlen(linkTo) > sizeof((*(ip->addrs))*NELEM(ip->addrs))) // symlink의 target이 너무 길면
+  {
+    cprintf("symlink: too long linkTo\n");
+    return -1;
+  }
+
+  begin_op();
+  if ((ip = namei(linkPath)) == 0) // 이미 symlink의 이름이 사용중이면
+  {
+    end_op();
+    return -1;
+  }
+  if((ip = create(linkPath, T_SYMLINK, 0, 0)) == 0){ // symlink inode 생성
+    //실패 시
+    end_op();
+    return -1;
+  } 
+  ip->isSymlink = 1;
+  end_op();
+  
+  /* Symlink는 nlink와 관계 없고, DIR로 link 가능.
+  if (ip->type == T_DIR)
+  {
+    iunlockput(ip);
+    end_op();
+    return -1;
+  }*/
+  /*ip->nlink++;
+  iupdate(ip);
+  iunlock(ip);*/
+
+
+/*
+  if ((dp = nameiparent(new, name)) == 0)
+    goto bad;
+  ilock(dp);
+  if (dp->dev != ip->dev || dirlink(dp, name, ip->inum) < 0)
+  {
+    iunlockput(dp);
+    goto bad;
+  }
+  iunlockput(dp);
+  iput(ip);
+
+  end_op();
+
+  bad:
+  ilock(ip);
+  ip->nlink--;
+  iupdate(ip);
+  iunlockput(ip);
+  end_op();
+  return -1;*/
+
+  if ((f = filealloc()) == 0)
+  {
+    if(f) {
+      fileclose(f); //열리다 말았으면 닫기.
+    }
+    iunlockput(ip);
+    return -1;
+  }
+
+  safestrcpy((char*)ip->addrs, linkTo, sizeof((*(ip->addrs))*NELEM(ip->addrs))); // symlink의 target을 저장
+  iunlock(ip);
+
+  f->readable = 1;
+  f->writable = 0; //readonly
+  f->ip = ip;
+  f->off = 0;
+}
+
+// symlinnk pathname에 저장된 symlink의 linkTo를 path에 저장
+int sys_lookSymlink(void)
+{
+  char *symlinkPath;
+  char *path;
+  int n;
+
+  if(argstr(0, &symlinkPath) < 0 || argstr(1, &path) < 0 || argint(2, &n)) {
+    cprinf("sys_lookSymlink: parse error\n");
+    return -1;
+  }
+  else {
+    return lookSymlink(symlinkPath, path, n);
+  }
+}
+
+int lookSymlink(char* symlinkPath, char* path, int n) {
+  struct inode *ip;
+  if((ip = namei(symlinkPath)) == 0) {
+    cprintf("lookSymlink: no file found with %s", symlinkPath);
+    return -1;
+  }
+  ilock(ip);
+  if(ip->isSymlink) {
+    safestrcpy(path, (char*)ip->addrs, n);
+    iunlock(ip);
+    return 0;
+  }
+
+  cprintf("lookSymlink: not a symlink! %s\n", symlinkPath);
+  iunlock(ip);
+  return -1;
+}
+
 // Is the directory dp empty except for "." and ".." ?
 static int
 isdirempty(struct inode *dp)
@@ -185,7 +300,7 @@ int
 sys_unlink(void)
 {
   struct inode *ip, *dp;
-  struct dirent de;
+  struct dirent de; // directory entry
   char name[DIRSIZ], *path;
   uint off;
 
@@ -204,21 +319,21 @@ sys_unlink(void)
   if(namecmp(name, ".") == 0 || namecmp(name, "..") == 0)
     goto bad;
 
-  if((ip = dirlookup(dp, name, &off)) == 0)
+  if((ip = dirlookup(dp, name, &off)) == 0) // directory에서 이름으로 찾기. 0이면 지울 파일이 없다.
     goto bad;
   ilock(ip);
 
   if(ip->nlink < 1)
     panic("unlink: nlink < 1");
-  if(ip->type == T_DIR && !isdirempty(ip)){
+  if(ip->type == T_DIR && !isdirempty(ip)){ // 안 빈 폴더는 지울 수 없다.
     iunlockput(ip);
     goto bad;
   }
 
   memset(&de, 0, sizeof(de));
-  if(writei(dp, (char*)&de, off, sizeof(de)) != sizeof(de))
+  if(writei(dp, (char*)&de, off, sizeof(de)) != sizeof(de)) // directory에서 해당 directory entry애 해당하는 부분만 0 fill
     panic("unlink: writei");
-  if(ip->type == T_DIR){
+  if(ip->type == T_DIR){ //지운 파일이 폴더면. 부모 link 감소. symbolic link에서는 감소하지 말아야?
     dp->nlink--;
     iupdate(dp);
   }
@@ -249,12 +364,14 @@ create(char *path, short type, short major, short minor)
   ilock(dp);
 
   if((ip = dirlookup(dp, name, 0)) != 0){
-    iunlockput(dp);
+    iunlockput(dp); // 부모 폴더는 쓸일 없고
     ilock(ip);
-    if(type == T_FILE && ip->type == T_FILE)
+    if(type == T_FILE && ip->type == T_FILE) // 파일이면서 이미 파일이 있으면
       return ip;
-    iunlockput(ip);
-    return 0;
+    if(type == T_SYMLINK && ip->type == T_SYMLINK) // 심볼릭 링크이면서 이미 심볼릭 링크가 있으면
+      return ip;
+    iunlockput(ip); // 폴더를 만드려는데 해당 이름의 폴더/파일이 이미 있으면, 혹은 파일을 만드려는데 해당 이름의 폴더가 있으면
+    return 0; //에러
   }
 
   if((ip = ialloc(dp->dev, type)) == 0)
@@ -274,7 +391,7 @@ create(char *path, short type, short major, short minor)
       panic("create dots");
   }
 
-  if(dirlink(dp, name, ip->inum) < 0)
+  if(dirlink(dp, name, ip->inum) < 0) // 부모 폴더에 자식 이름으로 link
     panic("create: dirlink");
 
   iunlockput(dp);

@@ -25,6 +25,7 @@ struct inode {
   //uint addrs[NDIRECT+1]; //fs.c에서만 사용
   //uint addrs[TINDIRECTIDX+1]; //proj3
   uint addrs[NDIRECT+3];
+  uint isSymlink;
 };
 
 // table mapping major device number to

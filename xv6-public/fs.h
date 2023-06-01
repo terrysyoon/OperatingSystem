@@ -22,7 +22,8 @@ struct superblock {
 };
 
 //#define NDIRECT 12
-#define NDIRECT 10
+//#define NDIRECT 10
+#define NDIRECT 9
 #define NINDIRECT (BSIZE / sizeof(uint))
 //#define MAXFILE (NDIRECT + NINDIRECT)
 // Proj3~
@@ -43,6 +44,7 @@ struct dinode {
   //uint addrs[NDIRECT+1];   // Data block addresses
   //uint addrs[TINDIRECTIDX+1]; //proj3
   uint addrs[NDIRECT+3]; //proj3
+  uint isSymlink; //proj3
 };
 
 // Inodes per block.
