@@ -531,6 +531,8 @@ int sys_symlink(void)
   f->ip = ip;
   f->off = 0;
 
+  f->type = FD_INODE;
+
   return 0;
 }
 
