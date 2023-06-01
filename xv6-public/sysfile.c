@@ -512,7 +512,7 @@ int sys_symlink(void)
   iunlockput(ip);
   end_op();
   return -1;*/
-
+  cprintf("allocating file..");
   if ((f = filealloc()) == 0)
   {
     if(f) {
@@ -522,9 +522,10 @@ int sys_symlink(void)
     cprintf("symlink: file alloc fail\n");
     return -1;
   }
-
+  cprintf("done!");
+  cprintf("symlink: linking to %s ...", linkTo);
   safestrcpy((char*)ip->addrs, linkTo, sizeof(ip->addrs)); // symlink의 target을 저장
-  cprintf("symlink: linking to %s", linkTo);
+  cprintf("done!\n");
   end_op();
   iunlock(ip);
 
