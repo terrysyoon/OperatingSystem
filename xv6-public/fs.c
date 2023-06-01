@@ -813,7 +813,7 @@ namex(char *path, int nameiparent, char *name)
         iput(ip);
         return 0;
       }*/
-      safestrcpy(symlinkTo, (char*)next->addrs, sizeof((*(next->addrs))*NELEM(next->addrs)));
+      safestrcpy(symlinkTo, (char*)next->addrs, sizeof(next->addrs));
       iunlockput(next);
       cprintf("namex: symlinkTo: %s\n", symlinkTo);
       return namex(symlinkTo, nameiparent, name);
