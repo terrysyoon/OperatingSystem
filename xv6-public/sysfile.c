@@ -464,7 +464,7 @@ int sys_symlink(void)
   }
 
   begin_op();
-  if ((ip = namei(linkPath)) == 0) // 이미 symlink의 이름이 사용중이면
+  if ((ip = namei(linkPath)) != 0) // 이미 symlink의 이름이 사용중이면
   {
     end_op();
     cprintf("symlink: name in use\n");
