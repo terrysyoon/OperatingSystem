@@ -467,11 +467,13 @@ int sys_symlink(void)
   if ((ip = namei(linkPath)) == 0) // 이미 symlink의 이름이 사용중이면
   {
     end_op();
+    cprintf("symlink: name in use\n");
     return -1;
   }
   if((ip = create(linkPath, T_SYMLINK, 0, 0)) == 0){ // symlink inode 생성
     //실패 시
     end_op();
+    cprintf("symlink: create fail\n");
     return -1;
   } 
   ip->isSymlink = 1;
@@ -517,6 +519,7 @@ int sys_symlink(void)
       fileclose(f); //열리다 말았으면 닫기.
     }
     iunlockput(ip);
+    cprintf("symlink: file alloc fail\n");
     return -1;
   }
 
