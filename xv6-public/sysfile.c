@@ -543,7 +543,7 @@ int sys_symlink(void)
     return -1;
   } 
   ip->isSymlink = 1;
-  end_op();
+  //end_op(); 6월 1일 주석. end_op 두번하지 말라고.
   
   /* Symlink는 nlink와 관계 없고, DIR로 link 가능.
   if (ip->type == T_DIR)
