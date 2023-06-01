@@ -140,7 +140,7 @@ userinit(void)
   p->tf->eip = 0;  // beginning of initcode.S
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
-  p->cwd = namei("/");
+  p->cwd = namei("/", 0); //기존 코드. set 0
 
   // this assignment to p->state lets other cores
   // run this process. the acquire forces the above
