@@ -194,6 +194,8 @@ sys_unlink(void)
   if(argstr(0, &path) < 0)
     return -1;
 
+  cprintf("unlink path: %s\n", path);
+
   begin_op();
   if((dp = nameiparent(path, name, 0)) == 0){
     end_op();
