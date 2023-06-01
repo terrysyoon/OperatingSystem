@@ -459,6 +459,7 @@ int sys_symlink(void)
   if(strlen(linkTo) > sizeof((*(ip->addrs))*NELEM(ip->addrs))) // symlink의 target이 너무 길면
   {
     cprintf("symlink: too long linkTo\n");
+    cprintf("%d > %d\n", strlen(linkTo), sizeof((*(ip->addrs))*NELEM(ip->addrs)));
     return -1;
   }
 
