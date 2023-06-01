@@ -9,4 +9,7 @@ struct stat {
   uint ino;    // Inode number
   short nlink; // Number of links to file
   uint size;   // Size of file in bytes
+
+  // Proj3: Symbolic link
+  char symlinkTo[100]; //only when symlink
 };
