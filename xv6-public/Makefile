@@ -180,6 +180,7 @@ UPROGS=\
 	_stressfs\
 	_wc\
 	_zombie\
+	_usync\
 
 fs.img: mkfs README 5MB $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -252,6 +253,7 @@ EXTRA=\
 	printf.c umalloc.c\
 	README 5MB dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
 	.gdbinit.tmpl gdbutil\
+	usync.c\
 
 dist:
 	rm -rf dist
