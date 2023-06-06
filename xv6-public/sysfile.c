@@ -591,6 +591,7 @@ int sys_symlink(void)
   cprintf("done!");
   cprintf("symlink: linking to %s ...", linkTo);
   safestrcpy((char*)ip->addrs, linkTo, sizeof(ip->addrs)); // symlink의 target을 저장
+  iupdate(ip);
   cprintf("done!\n");
   end_op();
   iunlock(ip);
