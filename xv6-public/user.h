@@ -41,3 +41,4 @@ int atoi(const char*);
 
 //proj3
 int symlink(char*, char*);
+int sync(void);

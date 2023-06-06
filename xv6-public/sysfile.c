@@ -638,3 +638,11 @@ int lookSymlink(char* symlinkPath, char* path, int n) {
   iunlock(ip);
   return -1;
 }
+
+
+//proj 3
+//flush write buffer, return -1 if error, or the number of flushed blocks on success.
+int sys_sync(void)
+{
+  return sync();
+}

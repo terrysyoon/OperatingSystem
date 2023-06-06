@@ -22,3 +22,4 @@
 #define SYS_close  21
 #define SYS_symlink 22
 #define SYS_openSymlinkFile 23 //proj3
+#define SYS_sync 24 //proj3
