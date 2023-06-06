@@ -5,6 +5,6 @@
 int
 main(int argc, char *argv[])
 {
-  sync();
+  while(sync() == -1);
   exit();
 }
