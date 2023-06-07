@@ -181,6 +181,7 @@ UPROGS=\
 	_wc\
 	_zombie\
 	_usync\
+	_usymlinkTest\
 
 fs.img: mkfs README 5MB $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -254,6 +255,7 @@ EXTRA=\
 	README 5MB dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
 	.gdbinit.tmpl gdbutil\
 	usync.c\
+	usymlinkTest.c\
 
 dist:
 	rm -rf dist
