@@ -594,7 +594,7 @@ int sys_symlink(void)
   iupdate(ip);
   cprintf("done!\n");
   end_op();
-  iunlock(ip);
+  iunlockput(ip); //let inode to be recycled.
 
   f->readable = 1;
   f->writable = 0; //readonly
