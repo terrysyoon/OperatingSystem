@@ -7,7 +7,11 @@ Date: 2023/06/07
 This file is used to test the symlink function.
 */
 
-void strcat(char* dest, const char* src) {
+#include "types.h"
+#include "stat.h"
+#include "user.h"
+
+void strcat(char* dest, char* src) {
     while (*dest)
         dest++;
     while ((*dest++ = *src++))
@@ -27,7 +31,7 @@ void itoa(int n, char* s) {
     s[i++] = '\0';
 }
 
-void atoi(char* s, int* n) {
+void atoi_n(char* s, int* n) {
     int i, sign;
     if ((sign = *s) == '-')
         s++;
@@ -44,27 +48,27 @@ int main(int argc, char* argv[]) {
     }
 
     int depth;
-    atoi(argv[2], &depth);
+    atoi_n(argv[2], &depth);
 
     int i;
-    char* old_target = (char*)malloc(100);
-    strcat(old_target, argv[1]);
+    char old_target[100];
+    strcat(&old_target[0], argv[1]);
     for(i = 0; i < depth; i++) {
-        char* new_target = (char*)malloc(100);
-        strcat(new_target, "sym_");
-        strcat(new_target, argv[1]);
-        strcat(new_target, "_");
-        char* depth_str = (char*)malloc(100);
-        itoa(i, depth_str);
-        strcat(new_target, depth_str);
+        char new_target[100];
+        strcat(&new_target[0], "sym_");
+        strcat(&new_target[0], argv[1]);
+        strcat(&new_target[0], "_");
+        char depth_str[100];
+        itoa(i, &depth_str[0]);
+        strcat(&new_target[0], &depth_str[0]);
         if(symlink(old_target, new_target) < 0) {
-            printf(2, "symlink %s %s: failed\n", argv[1], new_target);
+            printf(2, "symlink %s %s: failed\n", old_target, new_target);
             exit();
         }
-        free(old_target);
-        old_target = new_target;
-        free(depth_str);
-        depth_str = 0;
+        int j;
+        for(j = 0; j < 100; j++) {
+            old_target[j] = new_target[j];
+        }
     }
     exit();
     return -987654321;//unreachable
