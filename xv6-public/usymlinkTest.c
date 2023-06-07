@@ -68,6 +68,7 @@ int main(int argc, char* argv[]) {
         int j;
         for(j = 0; j < 100; j++) {
             old_target[j] = new_target[j];
+            new_target[j] = '\0';
         }
     }
     exit();
