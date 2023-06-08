@@ -258,6 +258,8 @@ log_write(struct buf *b)
   log.lh.block[i] = b->blockno;
   if (i == log.lh.n)
     log.lh.n++;
+
+  
   b->flags |= B_DIRTY; // prevent eviction
 
   if(log.lh.n == LOGSIZE-3) {
@@ -265,6 +267,7 @@ log_write(struct buf *b)
 
     int pid = fork();
     if(pid == 0) {
+      //여기로 진입 시 lock이 없는 상태. parent process가 sleep 들어가며 lock 풀음.
       while(log.lh.n == LOGSIZE-3) {
         if(sync() < 0) {
           cprintf("log_write: sync waiting\n");
@@ -275,7 +278,12 @@ log_write(struct buf *b)
       }
     }
     else if(pid > 0) {
+      while(log.lh.n == LOGSIZE-3) {
+        sleep(&log, &log.lock);
+      }
+      release(&log.lock);
       wait();
+      
     }
     else {
       panic("log_write: fork failed");
