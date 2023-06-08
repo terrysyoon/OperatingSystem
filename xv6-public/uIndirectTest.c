@@ -19,15 +19,15 @@ void atoi_n(char* s, int* n) {
 int
 main(int argc, char *argv[])
 {
-    int fd, i;
+    int fd, i, a;
 
     if(argc <= 1){
         printf(1, "Usage: uIndirectTest [blocks]\n");
         exit();
     }
     fd = open("uIndirectTestFile", O_CREATE | O_RDWR);
-    atoi_n(argv[1], &i);
-    for(i = 1; i <= argc; i++){
+    atoi_n(argv[1], &a);
+    for(i = 1; i <= a; i++){
         if(write(fd, ipsum, 512) < 0){ 
             printf(1, "uIndirectTest: Failed at block %d\n", i);
             exit();
