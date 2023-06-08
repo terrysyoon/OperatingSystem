@@ -263,9 +263,11 @@ log_write(struct buf *b)
     end_op();
     while(log.lh.n == LOGSIZE-3) {
       if(sync() < 0) {
+              cprintf("log_write: sync waiting\n");
         continue;
         //sleep(&log, &log.lock);
       }
+
     }
     begin_op();
   }
@@ -325,5 +327,6 @@ int sync() {
   }
 
   // No control flow should reach here.
+  panic("sync: control flow should not reach here.");
   return -98765431; //Dummy return.
 }
