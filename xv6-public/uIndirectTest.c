@@ -1,6 +1,7 @@
 #include "types.h"
 #include "stat.h"
 #include "user.h"
+#include "fcntl.h"
 
 //char buf[512];
 const char* ipsum = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed commodo elit a orci malesuada, et hendrerit nunc ullamcorper. Fusce auctor justo purus, eget scelerisque velit consequat at. Donec turpis mauris, imperdiet eget erat in, posuere accumsan dui. Integer ac nunc eget ipsum condimentum posuere et et neque. Suspendisse quis pretium sapien, vitae auctor est. Aliquam erat volutpat. Suspendisse potenti. Etiam pulvinar lacinia nulla, et auctor lorem efficitur a. Suspendisse dapibus bibendum est vitae euismod. Proin eu velit vitae massa ullamcorper ultricies eget id tellus. Nam volutpat nullam.";
@@ -24,7 +25,7 @@ main(int argc, char *argv[])
         printf(1, "Usage: uIndirectTest [blocks]\n");
         exit();
     }
-    fd = open("uIndirectTestFile", 0x200);
+    fd = open("uIndirectTestFile", O_CREATE | O_RDWR);
     atoi_n(argv[1], &i);
     for(i = 1; i <= argc; i++){
         if(write(fd, ipsum, 512) < 0){ 
