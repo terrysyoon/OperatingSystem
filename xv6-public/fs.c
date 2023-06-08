@@ -540,6 +540,13 @@ itrunc(struct inode *ip)
   struct buf *bp1, *bp2, *bp3;
   uint *a1, *a2, *a3;
 
+  for(i = 0; i < NDIRECT; i++){
+    if(ip->addrs[i]){
+      bfree(ip->dev, ip->addrs[i]);
+      ip->addrs[i] = 0;
+    }
+  }
+
   if(ip->addrs[DINDIRECTIDX]) {
     bp1 = bread(ip->dev, ip->addrs[DINDIRECTIDX]);
     a1 = (uint*)bp1->data;
@@ -549,7 +556,7 @@ itrunc(struct inode *ip)
       for(j = 0; j < NINDIRECT; j++) {
         if(a2[j]) {
           bfree(ip->dev, a2[j]);
-          //a2[j] = 0;
+          a2[j] = 0;
         }
       }
       brelse(bp2);
