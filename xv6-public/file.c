@@ -150,6 +150,10 @@ filewrite(struct file *f, char *addr, int n)
         panic("short filewrite");
       i += r;
     }
+    if(i != n) {
+      cprintf("filewrite: i != n  i = %d n = %d\n",i,n);
+      return -1;
+    }
     return i == n ? n : -1;
   }
   panic("filewrite");
