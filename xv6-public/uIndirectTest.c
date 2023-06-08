@@ -3,7 +3,7 @@
 #include "user.h"
 
 //char buf[512];
-const char* ipsum = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec non dolor pretium, fringilla tellus vitae, efficitur justo. Vestibulum scelerisque, arcu at fermentum sagittis, ipsum tellus malesuada ex, id iaculis nisl turpis quis urna. Vivamus vitae dui tempor, consectetur arcu at, dignissim erat. Quisque ac sollicitudin dui, non dignissim sem. Etiam posuere justo diam. Aenean lacinia ligula at turpis auctor auctor. Maecenas eget augue arcu. Pellentesque lobortis tincidunt pulvinar. Suspendisse non est nec.";
+const char* ipsum = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed commodo elit a orci malesuada, et hendrerit nunc ullamcorper. Fusce auctor justo purus, eget scelerisque velit consequat at. Donec turpis mauris, imperdiet eget erat in, posuere accumsan dui. Integer ac nunc eget ipsum condimentum posuere et et neque. Suspendisse quis pretium sapien, vitae auctor est. Aliquam erat volutpat. Suspendisse potenti. Etiam pulvinar lacinia nulla, et auctor lorem efficitur a. Suspendisse dapibus bibendum est vitae euismod. Proin eu velit vitae massa ullamcorper ultricies eget id tellus. Nam volutpat nullam.";
 
 void atoi_n(char* s, int* n) {
     int i, sign;

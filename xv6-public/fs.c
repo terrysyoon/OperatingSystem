@@ -425,6 +425,7 @@ bmap(struct inode *ip, uint bn) // 몇 번째 블럭 가져올지
     return addr;
   }
 
+  cprintf("double!\n");
   //double: 0~16383 block은 여기서 주고 return
   if(bn < N2INDIRECT) { 
 
