@@ -182,6 +182,7 @@ UPROGS=\
 	_zombie\
 	_usync\
 	_usymlinkTest\
+	_uIndirectTest\
 
 fs.img: mkfs README 5MB $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -256,6 +257,7 @@ EXTRA=\
 	.gdbinit.tmpl gdbutil\
 	usync.c\
 	usymlinkTest.c\
+	uIndirectTest.c\
 
 dist:
 	rm -rf dist
