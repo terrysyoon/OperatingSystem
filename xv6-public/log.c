@@ -274,6 +274,12 @@ log_write(struct buf *b)
         exit();
       }
     }
+    else if(pid > 0) {
+      wait();
+    }
+    else {
+      panic("log_write: fork failed");
+    }
     begin_op();
   }
   release(&log.lock);
