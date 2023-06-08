@@ -20,15 +20,23 @@ void strcat(char* dest, char* src) {
 
 void itoa(int n, char* s) {
     int i, sign;
+
+    char a[100];
+
     if ((sign = n) < 0)
         n = -n;
     i = 0;
     do {
-        s[i++] = n % 10 + '0';
+        a[i++] = n % 10 + '0';
     } while ((n /= 10) > 0);
     if (sign < 0)
-        s[i++] = '-';
-    s[i++] = '\0';
+        a[i++] = '-';
+    a[i++] = '\0';
+
+    int j;
+    for(j = 0; j < i-1; j++) {
+        s[j] = a[i - j - 2];
+    }
 }
 
 void atoi_n(char* s, int* n) {
