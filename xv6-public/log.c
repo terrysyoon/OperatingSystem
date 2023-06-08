@@ -259,9 +259,9 @@ log_write(struct buf *b)
     log.lh.n++;
   b->flags |= B_DIRTY; // prevent eviction
 
-  if(log.lh.n == LOGSIZE) {
+  if(log.lh.n == LOGSIZE-3) {
     end_op();
-    while(log.lh.n == LOGSIZE) {
+    while(log.lh.n == LOGSIZE-3) {
       if(sync() < 0) {
         continue;
         //sleep(&log, &log.lock);
