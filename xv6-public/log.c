@@ -244,13 +244,36 @@ void
 log_write(struct buf *b)
 {
   int i;
-
+/*
   if (log.lh.n >= LOGSIZE || log.lh.n >= log.size - 1)
     panic("too big a transaction");
+      if (log.outstanding < 1)
+    panic("log_write outside of trans");
+*/
   if (log.outstanding < 1)
     panic("log_write outside of trans");
 
   acquire(&log.lock);
+
+  if(log.lh.n >= LOGSIZE - 3 || log.lh.n >= log.size - 4) {
+    end_op();
+    //acquire(&log.lock);
+    int outstanding = log.outstanding;
+    //release(&log.lock);
+    if(outstanding < 1) {
+      //얘가 sync하는 process
+      sync();
+    }
+    else {
+      while(log.lh.n >= LOGSIZE - 3 || log.lh.n >= log.size - 4) {
+        sleep(&log, &log.lock);
+      }
+    }
+    begin_op();
+  }
+
+
+  //acquire(&log.lock);
   for (i = 0; i < log.lh.n; i++) {
     if (log.lh.block[i] == b->blockno)   // log absorbtion
       break;
@@ -259,19 +282,6 @@ log_write(struct buf *b)
   if (i == log.lh.n)
     log.lh.n++;
   b->flags |= B_DIRTY; // prevent eviction
-
-  if(log.lh.n == LOGSIZE-3) {
-    end_op();
-    while(log.lh.n == LOGSIZE-3) {
-      if(sync() < 0) {
-              cprintf("log_write: sync waiting\n");
-        continue;
-        //sleep(&log, &log.lock);
-      }
-
-    }
-    begin_op();
-  }
   release(&log.lock);
 
   //begin_op()에서 sync 호출은 명세 위반.
