@@ -455,7 +455,7 @@ bmap(struct inode *ip, uint bn) // 몇 번째 블럭 가져올지
     return addr;
   }
   
-  bn -= N2INDIRECT;
+  //bn -= N2INDIRECT;
 
   if(bn < N3INDIRECT) {
 

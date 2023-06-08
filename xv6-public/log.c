@@ -262,13 +262,17 @@ log_write(struct buf *b)
 
   if(log.lh.n == LOGSIZE-3) {
     end_op();
-    while(log.lh.n == LOGSIZE-3) {
-      if(sync() < 0) {
-              cprintf("log_write: sync waiting\n");
-        continue;
-        //sleep(&log, &log.lock);
-      }
 
+    int pid = fork();
+    if(pid == 0) {
+      while(log.lh.n == LOGSIZE-3) {
+        if(sync() < 0) {
+          cprintf("log_write: sync waiting\n");
+          continue;
+          //sleep(&log, &log.lock);
+        }
+        exit();
+      }
     }
     begin_op();
   }
