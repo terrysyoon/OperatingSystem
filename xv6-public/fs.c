@@ -551,18 +551,22 @@ itrunc(struct inode *ip)
     bp1 = bread(ip->dev, ip->addrs[DINDIRECTIDX]);
     a1 = (uint*)bp1->data;
     for(i = 0; i < NINDIRECT; i++) {
-      bp2 = bread(ip->dev, a1[i]);
-      a2 = (uint*)bp2->data;
-      for(j = 0; j < NINDIRECT; j++) {
-        if(a2[j]) {
-          bfree(ip->dev, a2[j]);
-          a2[j] = 0;
+      if(a1[i]) {
+        bp2 = bread(ip->dev, a1[i]);
+        a2 = (uint*)bp2->data;
+        for(j = 0; j < NINDIRECT; j++) {
+          if(a2[j]) {
+            bfree(ip->dev, a2[j]);
+            a2[j] = 0;
+          }
         }
+        brelse(bp2);
+        bfree(ip->dev, a1[i]);
+        a1[i] = 0;
       }
-      brelse(bp2);
-      bfree(ip->dev, a1[i]);
     }
     bfree(ip->dev, ip->addrs[DINDIRECTIDX]);
+    ip->addrs[DINDIRECTIDX] = 0;
   }
 
   if(ip->addrs[TINDIRECTIDX]) {
