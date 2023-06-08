@@ -425,7 +425,7 @@ bmap(struct inode *ip, uint bn) // 몇 번째 블럭 가져올지
     return addr;
   }
 
-  cprintf("double!\n");
+  //cprintf("double!\n");
   //double: 0~16383 block은 여기서 주고 return
   if(bn < N2INDIRECT) { 
 
@@ -455,7 +455,7 @@ bmap(struct inode *ip, uint bn) // 몇 번째 블럭 가져올지
     return addr;
   }
   
-  //bn -= N2INDIRECT;
+  bn -= N2INDIRECT;
 
   if(bn < N3INDIRECT) {
 
@@ -569,29 +569,43 @@ itrunc(struct inode *ip)
     ip->addrs[DINDIRECTIDX] = 0;
   }
 
-  if(ip->addrs[TINDIRECTIDX]) {
+  if(ip->addrs[TINDIRECTIDX]) 
+  {
     bp1 = bread(ip->dev, ip->addrs[TINDIRECTIDX]);
     a1 = (uint*)bp1->data;
-    for(i = 0; i < NINDIRECT; i++) {
-      bp2 = bread(ip->dev, a1[i]);
-      a2 = (uint*)bp2->data;
-      for(j = 0; j < NINDIRECT; j++) {
-        bp3 = bread(ip->dev, a2[j]);
-        a3 = (uint*)bp3->data;
-        for(k = 0; k < NINDIRECT; k++) {
-          if(a3[k]) {
-            bfree(ip->dev, a3[k]);
-            //a3[k] = 0;
+    for(i = 0; i < NINDIRECT; i++) 
+    {
+      if(a1[i]) 
+      {
+        bp2 = bread(ip->dev, a1[i]);
+        a2 = (uint*)bp2->data;
+        for(j = 0; j < NINDIRECT; j++) 
+        {
+          if(a2[j]) 
+          {
+            bp3 = bread(ip->dev, a2[j]);
+            a3 = (uint*)bp3->data;
+            for(k = 0; k < NINDIRECT; k++) 
+            {
+              if(a3[k]) 
+              {
+                bfree(ip->dev, a3[k]);
+                a3[k] = 0;
+              }
+            }
+            brelse(bp3);
+            bfree(ip->dev, a2[j]);
+            a2[j] = 0;
           }
         }
-        brelse(bp3);
-        bfree(ip->dev, a2[j]);
+        brelse(bp2);
+        bfree(ip->dev, a1[i]);
+        a1[i] = 0;
       }
-      brelse(bp2);
-      bfree(ip->dev, a1[i]);
     }
     brelse(bp1);
     bfree(ip->dev, ip->addrs[TINDIRECTIDX]);
+    ip->addrs[TINDIRECTIDX] = 0;
   }
 
   ip->size = 0;
