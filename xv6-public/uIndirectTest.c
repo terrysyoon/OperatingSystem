@@ -32,6 +32,7 @@ main(int argc, char *argv[])
             printf(1, "uIndirectTest: Failed at block %d\n", i);
             exit();
         }
+        sync();
     }
     close(fd);
     printf(1, "Done! %d\n", i-1);
