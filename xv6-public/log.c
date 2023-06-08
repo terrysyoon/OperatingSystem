@@ -133,6 +133,7 @@ begin_op(void)
   //acquire(&log.lock);
   while(1){
     if(log.committing){
+      cprintf("begin_op: committing, sleep\n");
       sleep(&log, &log.lock);
     } 
     /*
