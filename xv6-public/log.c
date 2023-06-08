@@ -262,6 +262,7 @@ log_write(struct buf *b)
     //release(&log.lock);
     if(outstanding < 1) {
       //얘가 sync하는 process
+      cprintf("enforced sync!\n");
       sync();
     }
     else {
