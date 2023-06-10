@@ -5,6 +5,9 @@
 #include "sleeplock.h"
 #include "fs.h"
 #include "buf.h"
+//verbose
+#include "mmu.h"
+#include "proc.h"
 
 // Simple logging that allows concurrent FS system calls.
 //
@@ -264,7 +267,7 @@ log_write(struct buf *b)
     end_op();
     while(log.lh.n == LOGSIZE-3) {
       if(sync() < 0) {
-              cprintf("log_write: sync waiting\n");
+        cprintf("log_write: sync waiting\n");
         continue;
         //sleep(&log, &log.lock);
       }
@@ -311,11 +314,14 @@ int sync() {
   }
 
   int to_flush = log.lh.n;
+  struct cpu* curcpu = mycpu();
   release(&log.lock);
 
   if(do_commit){
     // call commit w/o holding locks, since not allowed
     // to sleep with locks.
+    if(curcpu->ncli != 1)
+      panic("sync: mycpu()->ncli != 1");
     commit();
     acquire(&log.lock);
     log.committing = 0;
