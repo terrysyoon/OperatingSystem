@@ -73,7 +73,7 @@ static void
 install_trans(void)
 {
   int tail;
-
+  cprintf("install_trans\n");
   for (tail = 0; tail < log.lh.n; tail++) {
     struct buf *lbuf = bread(log.dev, log.start+tail+1); // read log block
     struct buf *dbuf = bread(log.dev, log.lh.block[tail]); // read dst
@@ -104,6 +104,7 @@ read_head(void)
 static void
 write_head(void)
 {
+  cprintf("write_head\n");
   struct buf *buf = bread(log.dev, log.start);
   struct logheader *hb = (struct logheader *) (buf->data);
   int i;
@@ -211,7 +212,7 @@ static void
 write_log(void)
 {
   int tail;
-
+  cprintf("write_log: log.lh.n = %d\n", log.lh.n);
   for (tail = 0; tail < log.lh.n; tail++) {
     struct buf *to = bread(log.dev, log.start+tail+1); // log block
     struct buf *from = bread(log.dev, log.lh.block[tail]); // cache block
