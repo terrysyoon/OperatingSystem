@@ -33,6 +33,8 @@ main(int argc, char *argv[])
             exit();
         }
         //sync();
+        if(i % 100 == 0)
+            printf(1, "uIndirectTest: %d\n", i/100);
     }
     close(fd);
     printf(1, "Done! %d\n", i-1);
