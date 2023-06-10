@@ -215,7 +215,9 @@ write_log(void)
   cprintf("write_log: log.lh.n = %d\n", log.lh.n);
   for (tail = 0; tail < log.lh.n; tail++) {
     struct buf *to = bread(log.dev, log.start+tail+1); // log block
+    cprintf("write_log: bread1\n");
     struct buf *from = bread(log.dev, log.lh.block[tail]); // cache block
+    cprintf("write_log: bread2\n");
     memmove(to->data, from->data, BSIZE);
     bwrite(to);  // write the log
     brelse(from);
