@@ -146,7 +146,7 @@ begin_op(void)
     // Discarded change.
     //log.lh.n은 log_write()로 begin_op() ~ end_op() 사이에도 갱신 됨. end_op에서 flush 안하더라도 outstanding 깎을 수 있는 이유.
     else if(log.lh.n + (log.outstanding+1)*MAXOPBLOCKS > LOGSIZE){ // Proj3: 얘가 작업하다가 버퍼 넘칠 수 있으면, 시작 전에 commit
-      cprintf("Forced Sync!");
+      //cprintf("Forced Sync!");
       sync(); // Proj3: commit
       // 만약 이번 sync가 실패하더라도, while loop에서 다시 sync()를 호출함. 성공할 때 까지 계속 호출.
     }
