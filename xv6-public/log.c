@@ -262,19 +262,6 @@ log_write(struct buf *b)
   if (i == log.lh.n)
     log.lh.n++;
   b->flags |= B_DIRTY; // prevent eviction
-
-  if(log.lh.n == LOGSIZE-3) {
-    end_op();
-    while(log.lh.n == LOGSIZE-3) {
-      if(sync() < 0) {
-        cprintf("log_write: sync waiting\n");
-        continue;
-        //sleep(&log, &log.lock);
-      }
-
-    }
-    begin_op();
-  }
   release(&log.lock);
 
   //begin_op()에서 sync 호출은 명세 위반.
@@ -320,8 +307,13 @@ int sync() {
   if(do_commit){
     // call commit w/o holding locks, since not allowed
     // to sleep with locks.
-    if(curcpu->ncli != 1)
-      panic("sync: mycpu()->ncli != 1");
+    if(curcpu->ncli != 1){
+      //panic("sync: mycpu()->ncli != 1");
+      cprintf("popping cli\n");
+      popcli();
+      cprintf("cli: %d\n", curcpu->ncli);
+    }
+
     commit();
     acquire(&log.lock);
     log.committing = 0;
@@ -336,4 +328,27 @@ int sync() {
   // No control flow should reach here.
   panic("sync: control flow should not reach here.");
   return -98765431; //Dummy return.
+}
+
+//must only be called from brelse with interrupt disabled, no locks in held state.
+int force_sync() {
+  if(log.lh.n == LOGSIZE-3) {
+    int res = -1;
+    end_op();
+    while(log.lh.n == LOGSIZE-3) {
+      if((res=sync()) < 0) {
+        cprintf("log_write: sync waiting\n");
+        continue;
+        //sleep(&log, &log.lock);
+      }
+
+    }
+    begin_op();
+    return res;
+  }
+  else {
+    popcli();
+    return 0;
+  }
+  return -987654321; //Dummy return.
 }

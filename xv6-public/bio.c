@@ -137,7 +137,9 @@ brelse(struct buf *b)
     bcache.head.next = b;
   }
   
+  pushcli();
   release(&bcache.lock);
+  force_sync();
 }
 //PAGEBREAK!
 // Blank page.

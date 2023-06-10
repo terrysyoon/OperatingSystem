@@ -193,3 +193,4 @@ void            clearpteu(pde_t *pgdir, char *uva);
 //proj 3
 int lookSymlink(char*, char*, int);
 int sync();
+int force_sync();
