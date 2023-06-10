@@ -308,6 +308,7 @@ int sync() {
   if(do_commit){
     // call commit w/o holding locks, since not allowed
     // to sleep with locks.
+    cprintf("cli: %d\n", curcpu->ncli);
     if(curcpu->ncli != 1){
       //panic("sync: mycpu()->ncli != 1");
       cprintf("popping cli\n");
