@@ -199,7 +199,7 @@ ialloc(uint dev, short type)
   struct dinode *dip;
 
   for(inum = 1; inum < sb.ninodes; inum++){
-    bp = bread(dev, IBLOCK(inum, sb));
+    bp = bread(dev, IBLOCK(inum, sb)); //여기서 lock 잡힘
     dip = (struct dinode*)bp->data + inum%IPB;
     if(dip->type == 0){  // a free inode
       memset(dip, 0, sizeof(*dip));
@@ -313,7 +313,7 @@ ilock(struct inode *ip)
 
 // Unlock the given inode.
 void
-iunlock(struct inode *ip)
+iunlock(struct inode *ip) // lock 풀기. reference 없으면 panic
 {
   if(ip == 0 || !holdingsleep(&ip->lock) || ip->ref < 1)
     panic("iunlock");
@@ -333,7 +333,7 @@ iput(struct inode *ip)
 {
   acquiresleep(&ip->lock);
   if(ip->valid && ip->nlink == 0){
-    acquire(&icache.lock);
+    acquire(&icache.lock); //inode cache 오래 잡으면 안됨..
     int r = ip->ref;
     release(&icache.lock);
     if(r == 1){
@@ -369,11 +369,12 @@ iunlockput(struct inode *ip)
 
 // Return the disk block address of the nth block in inode ip.
 // If there is no such block, bmap allocates one.
-static uint
-bmap(struct inode *ip, uint bn)
+static uint //바꿀함수 1
+bmap(struct inode *ip, uint bn) // 몇 번째 블럭 가져올지
 {
+  /* 
   uint addr, *a;
-  struct buf *bp;
+  struct buf *bp; //버퍼 포인터
 
   if(bn < NDIRECT){
     if((addr = ip->addrs[bn]) == 0)
@@ -397,6 +398,107 @@ bmap(struct inode *ip, uint bn)
   }
 
   panic("bmap: out of range");
+  */
+
+  uint addr, *a;
+  struct buf *bp; //triple indirect때는 bp3까지 사용
+
+  if(bn < NDIRECT){
+    if((addr = ip->addrs[bn]) == 0)
+      ip->addrs[bn] = addr = balloc(ip->dev);
+    return addr;
+  }
+  bn -= NDIRECT;
+
+  //single
+  if(bn < NINDIRECT){
+    // Load indirect block, allocating if necessary.
+    if((addr = ip->addrs[NDIRECT]) == 0)
+      ip->addrs[NDIRECT] = addr = balloc(ip->dev);
+    bp = bread(ip->dev, addr);
+    a = (uint*)bp->data;
+    if((addr = a[bn]) == 0){
+      a[bn] = addr = balloc(ip->dev);
+      log_write(bp);
+    }
+    brelse(bp);
+    return addr;
+  }
+
+  //cprintf("double!\n");
+  //double: 0~16383 block은 여기서 주고 return
+  bn -= NINDIRECT;
+  if(bn < N2INDIRECT) { 
+
+    if((addr = ip->addrs[DINDIRECTIDX]) == 0) {
+      ip->addrs[DINDIRECTIDX] = addr = balloc(ip->dev);
+    }
+    bp = bread(ip->dev, addr); //double indirect block read
+    a = (uint*)bp->data;
+
+
+    if((addr = a[bn/NINDIRECT]) == 0) { // 중간(2차) indirect block이 없으면 
+      a[bn/NINDIRECT] = addr = balloc(ip->dev);
+      log_write(bp);
+    }
+    brelse(bp);
+
+
+    bp = bread(ip->dev, addr); //2차 indirect block read
+    a = (uint*)bp->data;
+
+
+    if((addr = a[bn%NINDIRECT]) == 0) { // target block이 없으면
+      a[bn%NINDIRECT] = addr = balloc(ip->dev);
+      log_write(bp);
+    }
+    brelse(bp);
+    return addr;
+  }
+  
+  bn -= N2INDIRECT;
+
+  if(bn < N3INDIRECT) {
+
+    if((addr = ip->addrs[TINDIRECTIDX]) == 0) { // 맨 바깥(1차) triple indirect block이 없으면
+      ip->addrs[TINDIRECTIDX] = addr = balloc(ip->dev);
+    }
+    bp = bread(ip->dev, addr); //1차 indirect block read
+    a = (uint*)bp->data;
+
+
+
+    if((addr = a[bn/N2INDIRECT]) == 0) { // 중간(2차) indirect block이 없으면 
+      a[bn/N2INDIRECT] = addr = balloc(ip->dev);
+      log_write(bp);
+    }
+    brelse(bp);
+    bn = bn % N2INDIRECT;
+    bp = bread(ip->dev, addr); //2차 indirect block read
+    a = (uint*)bp->data;
+
+
+
+
+    if((addr = a[bn/NINDIRECT]) == 0) {
+      a[(bn)/NINDIRECT] = addr = balloc(ip->dev);
+      log_write(bp);
+    }
+    brelse(bp);
+    bp = bread(ip->dev, addr); //3차 indirect block read
+    a = (uint*)bp->data;
+
+
+
+    if((addr = a[bn%NINDIRECT]) == 0) { 
+      a[bn%NINDIRECT] = addr = balloc(ip->dev);
+      log_write(bp);
+    }
+    brelse(bp);
+    return addr;
+  }
+
+  panic("bmap: out of range");
 }
 
 // Truncate inode (discard contents).
@@ -404,9 +506,10 @@ bmap(struct inode *ip, uint bn)
 // to it (no directory entries referring to it)
 // and has no in-memory reference to it (is
 // not an open file or current directory).
-static void
+static void //바꿀함수 2
 itrunc(struct inode *ip)
 {
+  /*
   int i, j;
   struct buf *bp;
   uint *a;
@@ -428,6 +531,82 @@ itrunc(struct inode *ip)
     brelse(bp);
     bfree(ip->dev, ip->addrs[NDIRECT]);
     ip->addrs[NDIRECT] = 0;
+  }
+
+  ip->size = 0;
+  iupdate(ip);
+  */
+
+  int i, j, k;
+  struct buf *bp1, *bp2, *bp3;
+  uint *a1, *a2, *a3;
+
+  for(i = 0; i < NDIRECT; i++){
+    if(ip->addrs[i]){
+      bfree(ip->dev, ip->addrs[i]);
+      ip->addrs[i] = 0;
+    }
+  }
+
+  if(ip->addrs[DINDIRECTIDX]) {
+    bp1 = bread(ip->dev, ip->addrs[DINDIRECTIDX]);
+    a1 = (uint*)bp1->data;
+    for(i = 0; i < NINDIRECT; i++) {
+      if(a1[i]) {
+        bp2 = bread(ip->dev, a1[i]);
+        a2 = (uint*)bp2->data;
+        for(j = 0; j < NINDIRECT; j++) {
+          if(a2[j]) {
+            bfree(ip->dev, a2[j]);
+            a2[j] = 0;
+          }
+        }
+        brelse(bp2);
+        bfree(ip->dev, a1[i]);
+        a1[i] = 0;
+      }
+    }
+    bfree(ip->dev, ip->addrs[DINDIRECTIDX]);
+    ip->addrs[DINDIRECTIDX] = 0;
+  }
+
+  if(ip->addrs[TINDIRECTIDX]) 
+  {
+    bp1 = bread(ip->dev, ip->addrs[TINDIRECTIDX]);
+    a1 = (uint*)bp1->data;
+    for(i = 0; i < NINDIRECT; i++) 
+    {
+      if(a1[i]) 
+      {
+        bp2 = bread(ip->dev, a1[i]);
+        a2 = (uint*)bp2->data;
+        for(j = 0; j < NINDIRECT; j++) 
+        {
+          if(a2[j]) 
+          {
+            bp3 = bread(ip->dev, a2[j]);
+            a3 = (uint*)bp3->data;
+            for(k = 0; k < NINDIRECT; k++) 
+            {
+              if(a3[k]) 
+              {
+                bfree(ip->dev, a3[k]);
+                a3[k] = 0;
+              }
+            }
+            brelse(bp3);
+            bfree(ip->dev, a2[j]);
+            a2[j] = 0;
+          }
+        }
+        brelse(bp2);
+        bfree(ip->dev, a1[i]);
+        a1[i] = 0;
+      }
+    }
+    brelse(bp1);
+    bfree(ip->dev, ip->addrs[TINDIRECTIDX]);
+    ip->addrs[TINDIRECTIDX] = 0;
   }
 
   ip->size = 0;
@@ -535,6 +714,7 @@ dirlookup(struct inode *dp, char *name, uint *poff)
       panic("dirlookup read");
     if(de.inum == 0)
       continue;
+    //cprintf("name: %s dename: %s\n", name, de.name);
     if(namecmp(name, de.name) == 0){
       // entry matches path element
       if(poff)
@@ -543,7 +723,7 @@ dirlookup(struct inode *dp, char *name, uint *poff)
       return iget(dp->dev, inum);
     }
   }
-
+  //cprintf("dirlookup fail\n");
   return 0;
 }
 
@@ -556,7 +736,7 @@ dirlink(struct inode *dp, char *name, uint inum)
   struct inode *ip;
 
   // Check that name is not present.
-  if((ip = dirlookup(dp, name, 0)) != 0){
+  if((ip = dirlookup(dp, name, 0)) != 0){ // 이미 사용중인 이름
     iput(ip);
     return -1;
   }
@@ -622,10 +802,10 @@ skipelem(char *path, char *name)
 // path element into name, which must have room for DIRSIZ bytes.
 // Must be called inside a transaction since it calls iput().
 static struct inode*
-namex(char *path, int nameiparent, char *name)
+namex(char *path, int nameiparent, char *name, int findRealfile)
 {
   struct inode *ip, *next;
-
+  char symlinkTo[200];
   if(*path == '/')
     ip = iget(ROOTDEV, ROOTINO);
   else
@@ -633,8 +813,8 @@ namex(char *path, int nameiparent, char *name)
 
   while((path = skipelem(path, name)) != 0){
     ilock(ip);
-    if(ip->type != T_DIR){
-      iunlockput(ip);
+    if(ip->type != T_DIR){ // 더 들어가야 하는데 폴더가 아니면
+      iunlockput(ip); // iunlock -> iput
       return 0;
     }
     if(nameiparent && *path == '\0'){
@@ -646,10 +826,37 @@ namex(char *path, int nameiparent, char *name)
       iunlockput(ip);
       return 0;
     }
+    /*
     iunlockput(ip);
+    ip = next;*/
+    // 여기까지 기존 코드
+    iunlock(ip);
+    ilock(next);
+
+    if(next->type == T_SYMLINK && findRealfile) { //Symlink면 다시 열기 시작
+    /*
+      if(next->size > sizeof(symlinkTo) || readi(next, symlinkTo, 0, next->size) != next->size) { //path가 너무 길면
+        iunlockput(next);
+        iput(ip);
+        return 0;
+      }*/
+      safestrcpy(symlinkTo, (char*)next->addrs, sizeof(next->addrs));
+      iunlockput(next);
+      cprintf("namex: symlinkTo: %s\n", symlinkTo);
+      return namex(symlinkTo, nameiparent, name, findRealfile);
+    }
+    else {
+      iunlock(next); //기존에는 next를 안열었다.
+    }
+
+
+    iput(ip);
     ip = next;
+
+
+
   }
-  if(nameiparent){
+  if(nameiparent){ // nameiparent가 호출한거면
     iput(ip);
     return 0;
   }
@@ -657,14 +864,14 @@ namex(char *path, int nameiparent, char *name)
 }
 
 struct inode*
-namei(char *path)
+namei(char *path, int findRealfile)
 {
   char name[DIRSIZ];
-  return namex(path, 0, name);
+  return namex(path, 0, name, findRealfile);
 }
 
 struct inode*
-nameiparent(char *path, char *name)
+nameiparent(char *path, char *name, int findRealfile)
 {
-  return namex(path, 1, name);
+  return namex(path, 1, name, findRealfile);
 }

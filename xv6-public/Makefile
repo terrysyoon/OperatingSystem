@@ -27,7 +27,6 @@ OBJS = \
 	uart.o\
 	vectors.o\
 	vm.o\
-	ELE3021_proj2_syscall.o\
 
 # Cross-compiling (e.g., on Mac OS X)
 # TOOLPREFIX = i386-jos-elf
@@ -181,17 +180,11 @@ UPROGS=\
 	_stressfs\
 	_wc\
 	_zombie\
-	_pmanager\
-	_uprocdump\
-	_hello_thread\
-	_thread_exec\
-	_thread_exit\
-	_thread_kill\
-	_thread_test\
-	_pthreadtest\
-	_dummyProc\
+	_usync\
+	_usymlinkTest\
+	_uIndirectTest\
 
-fs.img: mkfs README $(UPROGS)
+fs.img: mkfs README 5MB $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
 
 -include *.d
@@ -205,7 +198,7 @@ clean:
 
 # make a printout
 FILES = $(shell grep -v '^\#' runoff.list)
-PRINT = runoff.list runoff.spec README toc.hdr toc.ftr $(FILES)
+PRINT = runoff.list runoff.spec README 5MB toc.hdr toc.ftr $(FILES)
 
 xv6.pdf: $(PRINT)
 	./runoff
@@ -260,17 +253,11 @@ EXTRA=\
 	mkfs.c ulib.c user.h cat.c echo.c forktest.c grep.c kill.c\
 	ln.c ls.c mkdir.c rm.c stressfs.c wc.c zombie.c\
 	printf.c umalloc.c\
-	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
+	README 5MB dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
 	.gdbinit.tmpl gdbutil\
-	pmanager.c\
-	uprocdump.c\
-	hello_thread.c\
-	thread_exec.c\
-	thread_exit.c\
-	thread_kill.c\
-	thread_test.c\
-	pthreadtest.c\
-	dummyProc.c\
+	usync.c\
+	usymlinkTest.c\
+	uIndirectTest.c\
 
 dist:
 	rm -rf dist

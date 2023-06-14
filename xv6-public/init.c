@@ -12,7 +12,7 @@ main(void)
 {
   int pid, wpid;
 
-  if(open("console", O_RDWR) < 0){
+  if(open("console", O_RDWR) < 0){ //find realFile
     mknod("console", 1, 1);
     open("console", O_RDWR);
   }

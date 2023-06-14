@@ -1,6 +1,3 @@
-#include "pthread.h"
-#include "param.h"
-
 // Per-CPU state
 struct cpu {
   uchar apicid;                // Local APIC ID
@@ -52,17 +49,6 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
-
-  //ELE3021 Project#2
-  uint memorylimit; // Memory limit, in bytes. 0 stands for limitless, which is the initial state.
-  uint stackSize; // Size of the stack, in bytes.
-
-  tcb_t tcb; // Thread control block
-
-  struct {
-    char *path;
-    char *argv[MAXARG];
-  }execParam;
 };
 
 // Process memory is laid out contiguously, low addresses first:

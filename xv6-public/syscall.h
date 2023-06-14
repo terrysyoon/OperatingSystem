@@ -20,12 +20,6 @@
 #define SYS_link   19
 #define SYS_mkdir  20
 #define SYS_close  21
-
-/*ELE3021 Project#2 Syscalls*/
-#define SYS_setmemorylimit 22
-#define SYS_pmanagerList 23
-#define SYS_exec2 24
-#define SYS_procdump 25
-#define SYS_thread_create 26
-#define SYS_thread_join 27
-#define SYS_thread_exit 28
+#define SYS_symlink 22
+#define SYS_openSymlinkFile 23 //proj3
+#define SYS_sync 24 //proj3

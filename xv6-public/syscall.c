@@ -19,10 +19,8 @@ fetchint(uint addr, int *ip)
 {
   struct proc *curproc = myproc();
 
-  if(addr >= curproc->sz || addr+4 > curproc->sz){
-    cprintf("fetchint: err addr: %d curproc->sz: %d\n", addr, curproc->sz);
+  if(addr >= curproc->sz || addr+4 > curproc->sz)
     return -1;
-  }
   *ip = *(int*)(addr);
   return 0;
 }
@@ -105,16 +103,9 @@ extern int sys_unlink(void);
 extern int sys_wait(void);
 extern int sys_write(void);
 extern int sys_uptime(void);
-/*ELE3021 Project#2 Syscalls*/
-extern int sys_setmemorylimit(void);
-extern int sys_pmanagerList(void);
-extern int sys_exec2(void);
-extern int sys_procdump(void);
-
-
-extern int sys_thread_create(void);
-extern int sys_thread_join(void);
-extern int sys_thread_exit(void);
+extern int sys_symlink(void);
+extern int sys_openSymlinkFile(void);
+extern int sys_sync(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -138,15 +129,9 @@ static int (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
-
-[SYS_setmemorylimit] sys_setmemorylimit,
-[SYS_pmanagerList] sys_pmanagerList,
-[SYS_exec2] sys_exec2,
-[SYS_procdump] sys_procdump,
-
-[SYS_thread_create] sys_thread_create,
-[SYS_thread_join] sys_thread_join,
-[SYS_thread_exit] sys_thread_exit,
+[SYS_symlink] sys_symlink,
+[SYS_openSymlinkFile] sys_openSymlinkFile,
+[SYS_sync] sys_sync,
 };
 
 void

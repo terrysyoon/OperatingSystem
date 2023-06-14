@@ -1,6 +1,3 @@
-#ifndef _PARAM_H_
-#define _PARAM_H_
-
 #define NPROC        64  // maximum number of processes
 #define KSTACKSIZE 4096  // size of per-process kernel stack
 #define NCPU          8  // maximum number of CPUs
@@ -13,9 +10,5 @@
 #define MAXOPBLOCKS  10  // max # of blocks any FS op writes
 #define LOGSIZE      (MAXOPBLOCKS*3)  // max data blocks in on-disk log
 #define NBUF         (MAXOPBLOCKS*3)  // size of disk block cache
-#define FSSIZE       1000  // size of file system in blocks
-
-#define MIN_STACK_SIZE (1) //exec2()
-#define MAX_STACK_SIZE (100) //exec2()
-
-#endif
+//#define FSSIZE       1000  // size of file system in blocks
+#define FSSIZE       (4000000)  // size of file system in blocks

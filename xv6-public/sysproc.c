@@ -33,7 +33,7 @@ sys_kill(void)
 
   if(argint(0, &pid) < 0)
     return -1;
-  return kill_parentProc(pid);
+  return kill(pid);
 }
 
 int
@@ -50,8 +50,8 @@ sys_sbrk(void)
 
   if(argint(0, &n) < 0)
     return -1;
-  addr = myproc()->tcb.parentProc->sz;
-  if(growproc_thread(n) < 0)
+  addr = myproc()->sz;
+  if(growproc(n) < 0)
     return -1;
   return addr;
 }

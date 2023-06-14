@@ -1,5 +1,3 @@
-#include "pthread.h"
-
 struct stat;
 struct rtcdate;
 
@@ -14,6 +12,7 @@ int close(int);
 int kill(int);
 int exec(char*, char**);
 int open(const char*, int);
+int openSymlinkFile(const char*, int, int); //proj3
 int mknod(const char*, short, short);
 int unlink(const char*);
 int fstat(int fd, struct stat*);
@@ -32,7 +31,6 @@ char* strcpy(char*, const char*);
 void *memmove(void*, const void*, int);
 char* strchr(const char*, char c);
 int strcmp(const char*, const char*);
-int strncmp(const char*, const char*, uint);
 void printf(int, const char*, ...);
 char* gets(char*, int max);
 uint strlen(const char*);
@@ -41,12 +39,6 @@ void* malloc(uint);
 void free(void*);
 int atoi(const char*);
 
-/* ELE3021 Project#2 Syscalls */
-int setmemorylimit(int, int);
-void pmanagerList(void);
-int exec2(char*, char**, int);
-void procdump(void);
-
-int thread_create(thread_t *, void *(*)(void *), void *);
-void thread_exit(void *);
-int thread_join(thread_t, void **);
+//proj3
+int symlink(char*, char*);
+int sync(void);
