@@ -5,6 +5,8 @@
 int
 main(int argc, char *argv[])
 {
-  while(sync() == -1);
+  int a;
+  while((a=sync()) == -1);
+  printf(1, "sync() returned %d\n", a);
   exit();
 }
