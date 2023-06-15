@@ -519,7 +519,7 @@ int sys_symlink(void)
 {
   char *linkTo, *linkPath;
   struct inode *ip; // symlink의 inode
-  struct file * f; // symlink의 file
+  //struct file * f; // symlink의 file
 
   if (argstr(0, &linkTo) < 0 || argstr(1, &linkPath) < 0)
     return -1;
@@ -538,12 +538,14 @@ int sys_symlink(void)
     cprintf("symlink: name in use\n");
     return -1;
   }
+  cprintf("allocating inode..");
   if((ip = create(linkPath, T_SYMLINK, 0, 0)) == 0){ // symlink inode 생성
     //실패 시
     end_op();
     cprintf("symlink: create fail\n");
     return -1;
   } 
+  cprintf("done!");
   ip->isSymlink = 1;
   //end_op(); 6월 1일 주석. end_op 두번하지 말라고.
   
@@ -580,6 +582,7 @@ int sys_symlink(void)
   iunlockput(ip);
   end_op();
   return -1;*/
+  /*
   cprintf("allocating file..");
   if ((f = filealloc()) == 0)
   {
@@ -591,20 +594,21 @@ int sys_symlink(void)
     return -1;
   }
   cprintf("done!");
+  */
   cprintf("symlink: linking to %s ...", linkTo);
   safestrcpy((char*)ip->addrs, linkTo, sizeof(ip->addrs)); // symlink의 target을 저장
   iupdate(ip);
   cprintf("done!\n");
   end_op();
   iunlockput(ip); //let inode to be recycled.
-
+/*
   f->readable = 1;
   f->writable = 0; //readonly
   f->ip = ip;
   f->off = 0;
 
   f->type = FD_INODE;
-
+*/
   return 0;
 }
 
@@ -633,12 +637,12 @@ int lookSymlink(char* symlinkPath, char* path, int n) {
   ilock(ip);
   if(ip->isSymlink) {
     safestrcpy(path, (char*)ip->addrs, n);
-    iunlock(ip);
+    iunlockput(ip);
     return 0;
   }
 
   cprintf("lookSymlink: not a symlink! %s\n", symlinkPath);
-  iunlock(ip);
+  iunlockput(ip);
   return -1;
 }
 
