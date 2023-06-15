@@ -870,6 +870,11 @@ namex(char *path, int nameiparent, char *name, int findRealfile)
       ilock(ip);
       safestrcpy(symlinkTo, (char*)ip->addrs, sizeof(ip->addrs));
       cprintf("%s\n",(char*)ip->addrs);
+      int i;
+      for(i = 0; i < 48; i++) {
+        cprintf("%d", ((char*)ip->addrs)[i]);
+      }
+      cprintf("\n");
       iunlockput(ip);
       cprintf("namex: symlinkTo: %s\n", symlinkTo);
       return namex(symlinkTo, nameiparent, name, findRealfile);
