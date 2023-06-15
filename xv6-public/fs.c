@@ -877,7 +877,7 @@ namex(char *path, int nameiparent, char *name, int findRealfile)
       }
       cprintf("\n");
       iunlockput(ip);
-      cprintf("namex: symlinkTo: %s\n", symlinkTo);
+      cprintf("namex: inode: %d symlinkTo: %s\n", ip->inum, symlinkTo);
       return namex(symlinkTo, nameiparent, name, findRealfile);
   }
   //iunlock(ip);
