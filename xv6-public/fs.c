@@ -296,7 +296,7 @@ ilock(struct inode *ip)
   acquiresleep(&ip->lock);
 
   if(ip->valid == 0){
-    cprintf("ilock: invalid %d\n", ip->inum);
+    //cprintf("ilock: invalid %d\n", ip->inum);
     bp = bread(ip->dev, IBLOCK(ip->inum, sb));
     dip = (struct dinode*)bp->data + ip->inum%IPB;
     ip->type = dip->type;
