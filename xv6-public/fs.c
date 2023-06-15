@@ -807,7 +807,7 @@ namex(char *path, int nameiparent, char *name, int findRealfile)
   struct inode *ip, *next;
   char symlinkTo[200];
   if(*path == '/')
-    ip = iget(ROOTDEV, ROOTINO);
+    ip = iget(ROOTDEV, ROOTINO); // reference 올라감
   else
     ip = idup(myproc()->cwd);
 
@@ -822,7 +822,7 @@ namex(char *path, int nameiparent, char *name, int findRealfile)
       iunlock(ip);
       return ip;
     }
-    if((next = dirlookup(ip, name, 0)) == 0){
+    if((next = dirlookup(ip, name, 0)) == 0){ //reference 올라감
       iunlockput(ip);
       return 0;
     }
@@ -842,6 +842,7 @@ namex(char *path, int nameiparent, char *name, int findRealfile)
       }*/
       safestrcpy(symlinkTo, (char*)next->addrs, sizeof(next->addrs));
       iunlockput(next);
+      iput(ip);
       cprintf("namex: symlinkTo: %s\n", symlinkTo);
       return namex(symlinkTo, nameiparent, name, findRealfile);
     }
