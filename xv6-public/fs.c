@@ -866,9 +866,9 @@ namex(char *path, int nameiparent, char *name, int findRealfile)
     return 0;
   }
 
-
+  ilock(ip);
   if(ip->type == T_SYMLINK && findRealfile) { //Symlink면 다시 열기 시작
-      ilock(ip);
+      //ilock(ip);
       safestrcpy(symlinkTo, (char*)ip->addrs, sizeof(ip->addrs));
       cprintf("%s\n",(char*)ip->addrs);
       int i;
@@ -880,7 +880,7 @@ namex(char *path, int nameiparent, char *name, int findRealfile)
       cprintf("namex: inode: %d symlinkTo: %s\n", ip->inum, symlinkTo);
       return namex(symlinkTo, nameiparent, name, findRealfile);
   }
-  //iunlock(ip);
+  iunlock(ip);
   return ip;
 }
 
