@@ -830,36 +830,47 @@ namex(char *path, int nameiparent, char *name, int findRealfile)
     iunlockput(ip);
     ip = next;*/
     // 여기까지 기존 코드
-    iunlock(ip);
-    ilock(next);
 
-    if(next->type == T_SYMLINK && findRealfile) { //Symlink면 다시 열기 시작
-    /*
-      if(next->size > sizeof(symlinkTo) || readi(next, symlinkTo, 0, next->size) != next->size) { //path가 너무 길면
-        iunlockput(next);
-        iput(ip);
-        return 0;
-      }*/
-      safestrcpy(symlinkTo, (char*)next->addrs, sizeof(next->addrs));
-      iunlockput(next);
-      iput(ip);
-      cprintf("namex: symlinkTo: %s\n", symlinkTo);
-      return namex(symlinkTo, nameiparent, name, findRealfile);
-    }
-    else {
-      iunlock(next); //기존에는 next를 안열었다.
-    }
+// /*     /*
+//     iunlock(ip);
+//     ilock(next);
+// */
+//     if(next->type == T_SYMLINK && findRealfile) { //Symlink면 다시 열기 시작
+//     /*
+//       if(next->size > sizeof(symlinkTo) || readi(next, symlinkTo, 0, next->size) != next->size) { //path가 너무 길면
+//         iunlockput(next);
+//         iput(ip);
+//         return 0;
+//       }*/
+//       safestrcpy(symlinkTo, (char*)next->addrs, sizeof(next->addrs));
+//       iunlockput(next);
+//       iput(ip);
+//       cprintf("namex: symlinkTo: %s\n", symlinkTo);
+//       return namex(symlinkTo, nameiparent, name, findRealfile);
+//     }
+//     else {
+//       iunlock(next); //기존에는 next를 안열었다.
+//     }
 
 
-    iput(ip);
+//     iput(ip);
+//     ip = next;
+//     */ */
+    iunlockput(ip);
     ip = next;
-
-
-
   }
+
   if(nameiparent){ // nameiparent가 호출한거면
     iput(ip);
     return 0;
+  }
+
+  if(ip->type == T_SYMLINK && findRealfile) { //Symlink면 다시 열기 시작
+
+      safestrcpy(symlinkTo, (char*)ip->addrs, sizeof(ip->addrs));
+      iput(ip);
+      cprintf("namex: symlinkTo: %s\n", symlinkTo);
+      return namex(symlinkTo, nameiparent, name, findRealfile);
   }
   return ip;
 }
